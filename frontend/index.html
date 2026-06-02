@@ -13,7 +13,7 @@
     --line:#272d39; --line-2:#333b49;
     --txt:#e6e9ef; --txt-2:#9aa3b2; --txt-3:#626b7a;
     --accent:#3d7bfd; --accent-2:#2c63d6; --accent-sf:rgba(61,123,253,.14);
-    --green:#34d399; --amber:#f6c454; --violet:#a78bfa; --red:#f87171; --slate:#7b8694;
+    --green:#34d399; --amber:#f6c454; --violet:#a78bfa; --red:#f87171; --slate:#7b8694; --pink:#f472b6;
     --radius:9px; --sidebar:232px; --topbar:56px;
     --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.28);
     font-family:'IBM Plex Sans',system-ui,sans-serif;
@@ -72,7 +72,7 @@
   .btn.danger:hover{border-color:var(--red);color:var(--red)}
   .btn.sm{padding:6px 9px;font-size:12px}
  
-  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+  .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:22px}
   .stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;position:relative;overflow:hidden}
   .stat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c,var(--accent))}
   .stat .k{font-size:12px;color:var(--txt-2)}
@@ -111,6 +111,7 @@
   .st-active{color:var(--green);background:rgba(52,211,153,.1)}
   .st-paused{color:var(--amber);background:rgba(246,196,84,.1)}
   .st-done{color:var(--slate);background:rgba(123,134,148,.12)}
+  .st-new{color:var(--pink);background:rgba(244,114,182,.12)}
  
   .swatch{width:22px;height:22px;border-radius:6px;border:1px solid rgba(255,255,255,.12);flex:none}
  
@@ -407,7 +408,7 @@ function renderProjects(){
   const s={total:projects.length,new:0,active:0,paused:0,done:0};
   projects.forEach(p=>s[p.status]!==undefined&&s[p.status]++);
   $("navProjects").textContent=s.total;
-  $("stats").innerHTML=stat("Totale",s.total,"var(--accent)")+stat("Nuovi",s.newactive,"var(--pink)")+stat("Attivi",s.active,"var(--green)")
+  $("stats").innerHTML=stat("Totale",s.total,"var(--accent)")+stat("Nuovi",s.new,"var(--pink)")+stat("Attivi",s.active,"var(--green)")
     +stat("In pausa",s.paused,"var(--amber)")+stat("Completati",s.done,"var(--slate)");
  
   const tb=$("tbodyP");
@@ -489,7 +490,7 @@ function openProject(id){
     f.pId.value=p.id;f.pName.value=p.name;f.pStatus.value=p.status;f.pNotes.value=p.notes||"";
     populateCatSelect(p.category);
   }else{$("pTitle").textContent="Nuovo progetto";
-    f.pId.value="";f.pName.value="";f.pStatus.value="active";f.pNotes.value="";
+    f.pId.value="";f.pName.value="";f.pStatus.value="new";f.pNotes.value="";
     if(categories[0]) f.pCat.value=categories[0].key;}
   $("ovP").classList.add("open");setTimeout(()=>f.pName.focus(),120);
 }
