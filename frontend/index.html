@@ -125,6 +125,37 @@
   .st-done{color:var(--slate);background:rgba(123,134,148,.12)}
   .st-new{color:var(--pink);background:rgba(244,114,182,.12)}
  
+  /* componenti — priorità */
+  .pr-high{color:var(--red);background:rgba(248,113,113,.12)}
+  .pr-medium{color:var(--amber);background:rgba(246,196,84,.12)}
+  .pr-low{color:var(--slate);background:rgba(123,134,148,.14)}
+  /* componenti — stato acquisto */
+  .cs-to_buy{color:var(--accent);background:var(--accent-sf)}
+  .cs-ordered{color:var(--amber);background:rgba(246,196,84,.1)}
+  .cs-delivered{color:var(--green);background:rgba(52,211,153,.1)}
+  .cs-cancelled{color:var(--txt-3);background:rgba(123,134,148,.1)}
+  td.price{font-family:'IBM Plex Mono';color:var(--txt);white-space:nowrap}
+  td.qty{font-family:'IBM Plex Mono';color:var(--txt-2);text-align:right;width:60px}
+  td.name .csub{display:block;font-weight:400;font-size:12px;color:var(--txt-3);margin-top:3px;
+    max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  a.ext{color:var(--txt-3);margin-left:8px;display:inline-flex;vertical-align:middle}
+  a.ext:hover{color:var(--accent)}
+  #tbodyK tr{cursor:pointer;user-select:none;-webkit-user-select:none}
+  .selminor{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 12px;
+    color:var(--txt);font-family:inherit;font-size:13px;outline:none;cursor:pointer;max-width:200px}
+  .selminor:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-sf)}
+  /* lista spesa per negozio */
+  .shophint{font-size:12px;color:var(--txt-3);margin-bottom:10px}
+  .shopgrid{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;margin-bottom:20px}
+  .shopcard{flex:0 0 auto;min-width:148px;text-align:left;background:var(--panel);border:1px solid var(--line);
+    border-radius:var(--radius);padding:13px 15px;cursor:pointer;transition:.12s;font-family:inherit;color:var(--txt)}
+  .shopcard:hover{border-color:var(--line-2);background:var(--panel-2)}
+  .shopcard.active{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-sf)}
+  .shopcard .sc-shop{font-weight:600;font-size:13px;display:flex;align-items:center;gap:8px}
+  .shopcard .sc-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none}
+  .shopcard .sc-meta{display:flex;justify-content:space-between;gap:14px;margin-top:9px;font-size:12px;color:var(--txt-2)}
+  .shopcard .sc-tot{font-family:'IBM Plex Mono';color:var(--txt)}
+ 
   .swatch{width:22px;height:22px;border-radius:6px;border:1px solid rgba(255,255,255,.12);flex:none}
  
   .empty{padding:56px 20px;text-align:center;color:var(--txt-3)}
@@ -204,15 +235,15 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.6 13.4 11 3.8a2 2 0 0 0-1.4-.6H4a1 1 0 0 0-1 1v5.6a2 2 0 0 0 .6 1.4l9.6 9.6a2 2 0 0 0 2.8 0l4.6-4.6a2 2 0 0 0 0-2.8z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg>
       Categorie <span class="badge mono" id="navCats">0</span>
     </div>
-    <div class="nav-item soon">
+    <div class="nav-item" data-view="components">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-      Componenti <span class="badge">soon</span>
+      Componenti <span class="badge mono" id="navComponents">0</span>
     </div>
     <div class="nav-item soon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
       Pomodoro <span class="badge">soon</span>
     </div>
-    <div class="foot mono">v0.3.0 · NASGUL</div>
+    <div class="foot mono">v0.4.0 · NASGUL</div>
   </nav>
  
   <main class="content">
@@ -274,6 +305,43 @@
         <tbody id="tbodyC"></tbody></table>
       </div>
     </section>
+ 
+    <!-- ============ VIEW: COMPONENTI ============ -->
+    <section id="view-components" hidden>
+      <div class="page-head">
+        <div><h1>Componenti</h1><p>Materiali da acquistare per i progetti, con negozio, prezzo e stato.</p></div>
+        <div class="spacer"></div>
+        <button class="btn primary" onclick="openComponent()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+          Nuovo componente
+        </button>
+      </div>
+ 
+      <div class="shophint">Lista spesa — pezzi ancora da comprare, raggruppati per negozio. Tocca un negozio per filtrare.</div>
+      <div class="shopgrid" id="shopSummary"></div>
+ 
+      <div class="toolbar">
+        <div class="filters" id="compFilters">
+          <div class="filter active" data-f="all">Tutti</div>
+          <div class="filter" data-f="to_buy">Da comprare</div>
+          <div class="filter" data-f="ordered">Ordinati</div>
+          <div class="filter" data-f="delivered">Consegnati</div>
+          <div class="filter" data-f="cancelled">Annullati</div>
+        </div>
+        <select id="compProjFilter" class="selminor" onchange="onCompProjFilter()"></select>
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="compSearch" placeholder="Cerca componente…" oninput="renderComponents()">
+        </div>
+      </div>
+ 
+      <div class="panel" style="overflow-x:auto">
+        <table><thead><tr>
+          <th>Componente</th><th>Progetto</th><th>Negozio</th><th>Qtà</th><th>Prezzo</th><th>Priorità</th><th>Stato</th><th></th>
+        </tr></thead>
+        <tbody id="tbodyK"></tbody></table>
+      </div>
+    </section>
   </main>
 </div>
  
@@ -333,6 +401,52 @@
   </div>
 </div>
  
+<!-- Modal Componente -->
+<div class="overlay" id="ovK">
+  <div class="modal">
+    <header><h2 id="kTitle">Nuovo componente</h2>
+      <div class="x" onclick="closeComponent()"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></div>
+    </header>
+    <div class="body">
+      <input type="hidden" id="k-id">
+      <div class="field"><label>Nome</label>
+        <input id="k-name" placeholder="es. PicoPSU RGEEK 1106" autocomplete="off"></div>
+      <div class="field-row">
+        <div class="field"><label>Progetto</label><select id="k-project"></select></div>
+        <div class="field"><label>Negozio</label>
+          <input id="k-shop" placeholder="es. Amazon, Action, AliExpress" autocomplete="off"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Quantità</label>
+          <input id="k-qty" type="number" min="1" step="1" value="1"></div>
+        <div class="field"><label>Prezzo stimato (€)</label>
+          <input id="k-price" type="number" min="0" step="0.01" placeholder="es. 28.50"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Priorità</label>
+          <select id="k-priority">
+            <option value="high">Alta</option>
+            <option value="medium" selected>Media</option>
+            <option value="low">Bassa</option>
+          </select></div>
+        <div class="field"><label>Stato</label>
+          <select id="k-status">
+            <option value="to_buy">Da comprare</option>
+            <option value="ordered">Ordinato</option>
+            <option value="delivered">Consegnato</option>
+            <option value="cancelled">Annullato</option>
+          </select></div>
+      </div>
+      <div class="field"><label>Link prodotto (opzionale)</label>
+        <input id="k-url" placeholder="https://…" autocomplete="off"></div>
+      <div class="field"><label>Note / specifiche</label>
+        <textarea id="k-desc" placeholder="Specifiche, modello, note…"></textarea></div>
+    </div>
+    <footer><button class="btn ghost" onclick="closeComponent()">Annulla</button>
+      <button class="btn primary" id="kSave" onclick="saveComponent()">Salva</button></footer>
+  </div>
+</div>
+ 
 <div class="toasts" id="toasts"></div>
  
 <script>
@@ -348,8 +462,17 @@ let catMap = {};
 let currentFilter = "all";
 let sortKey = "updated_at";   // colonna di ordinamento iniziale
 let sortDir = "desc";         // "asc" | "desc"
+let components = [];
+let compFilter = "all";       // filtro stato componente
+let compProj = "all";         // filtro progetto
+let activeShop = null;        // negozio selezionato dalla lista spesa
+let shopData = [];            // cache riepilogo lista spesa
  
 const ST_LABEL = {new:"Nuovo",active:"Attivo", paused:"In pausa", done:"Completato"};
+const PR_LABEL = {high:"Alta", medium:"Media", low:"Bassa"};
+const PR_RANK  = {high:0, medium:1, low:2};
+const CS_LABEL = {to_buy:"Da comprare", ordered:"Ordinato", delivered:"Consegnato", cancelled:"Annullato"};
+function fmtEur(v){ return (v==null||v==="")?"—":Number(v).toLocaleString("it-IT",{style:"currency",currency:"EUR"}); }
 const PALETTE = ["#3d7bfd","#f6c454","#a78bfa","#34d399","#f87171","#22d3ee","#fb923c","#e879f9","#60a5fa","#a3e635"];
  
 const $ = id => document.getElementById(id);
@@ -370,7 +493,9 @@ function fmtDate(s){
  
 // form refs
 const f={pId:$("p-id"),pName:$("p-name"),pCat:$("p-category"),pStatus:$("p-status"),pNotes:$("p-notes"),
-         cId:$("c-id"),cLabel:$("c-label"),cColor:$("c-color")};
+         cId:$("c-id"),cLabel:$("c-label"),cColor:$("c-color"),
+         kId:$("k-id"),kName:$("k-name"),kProject:$("k-project"),kShop:$("k-shop"),kQty:$("k-qty"),
+         kPrice:$("k-price"),kPriority:$("k-priority"),kStatus:$("k-status"),kUrl:$("k-url"),kDesc:$("k-desc")};
  
 // ---------- API ----------
 async function api(path,opts={}){
@@ -380,6 +505,14 @@ async function api(path,opts={}){
   return res.status===204?null:res.json();
 }
 function withCounts(){ return categories.map(c=>({...c,project_count:projects.filter(p=>p.category===c.key).length})); }
+function joinComp(c){ const p=projects.find(x=>x.id===c.project_id)||{}; return {...c,project_name:p.name||"—",project_category:p.category||"other"}; }
+function compsWithJoin(){ return components.map(joinComp); }
+function shopSummaryDemo(){
+  const agg={};
+  components.filter(c=>c.status==="to_buy").forEach(c=>{ const k=(c.shop&&c.shop.trim())||"—";
+    agg[k]=agg[k]||{shop:k,items:0,total:0}; agg[k].items++; agg[k].total+=(Number(c.estimated_price)||0)*(c.quantity||1); });
+  return Object.values(agg).sort((a,b)=>b.total-a.total||b.items-a.items);
+}
 function mockApi(path,opts={}){
   const m=(opts.method||"GET").toUpperCase();
   if(path==="/projects"&&m==="GET") return [...projects];
@@ -390,10 +523,17 @@ function mockApi(path,opts={}){
     let k=slug(b.label),i=1;while(categories.some(c=>c.key===k)){i++;k=slug(b.label)+"-"+i;}
     const cat={id:Math.max(0,...categories.map(c=>c.id))+1,key:k,label:b.label,color:b.color||PALETTE[categories.length%PALETTE.length],project_count:0};
     categories.push(cat);return cat;}
+  if(path==="/components"&&m==="GET") return compsWithJoin();
+  if(path==="/components"&&m==="POST"){const b=JSON.parse(opts.body);b.id=Math.max(0,...components.map(c=>c.id))+1;
+    b.created_at=new Date().toISOString().slice(0,19).replace("T"," ");components.unshift(b);return joinComp(b);}
+  if(path==="/shopping-list/summary"&&m==="GET") return shopSummaryDemo();
   const id=parseInt(path.split("/")[2]||0);
   if(path.startsWith("/projects/")){const i=projects.findIndex(p=>p.id===id);
     if(m==="PATCH"){Object.assign(projects[i],JSON.parse(opts.body));projects[i].updated_at=new Date().toISOString().slice(0,19).replace("T"," ");return projects[i];}
-    if(m==="DELETE"){projects.splice(i,1);return null;}}
+    if(m==="DELETE"){projects.splice(i,1);components=components.filter(c=>c.project_id!==id);return null;}}
+  if(path.startsWith("/components/")){const i=components.findIndex(c=>c.id===id);
+    if(m==="PATCH"){Object.assign(components[i],JSON.parse(opts.body));return joinComp(components[i]);}
+    if(m==="DELETE"){components.splice(i,1);return null;}}
   if(path.startsWith("/categories/")){const i=categories.findIndex(c=>c.id===id);
     if(m==="PATCH"){Object.assign(categories[i],JSON.parse(opts.body));return categories[i];}
     if(m==="DELETE"){const used=projects.filter(p=>p.category===categories[i].key).length;
@@ -414,17 +554,23 @@ async function checkConn(){
     projects=[{id:1,name:"NASGUL",category:"hardware",status:"active",notes:"Home server OMV. Pico ATX + Mean Well, ~49W.",created_at:"2026-03-12 09:20:00",updated_at:"2026-05-30 18:42:00"},
               {id:2,name:"GILPA",category:"software",status:"active",notes:"Assistente personale self-hosted. In costruzione.",created_at:"2026-05-18 21:05:00",updated_at:"2026-06-02 14:15:00"},
               {id:3,name:"Album Lia",category:"music",status:"paused",notes:"Sessioni da riprendere.",created_at:"2026-01-08 11:00:00",updated_at:"2026-02-14 17:30:00"},
-              {id:4,name:"Domotica Zigbee",category:"other",status:"active",notes:"Lista componenti da definire.",created_at:"2026-04-22 08:10:00",updated_at:"2026-04-22 08:10:00"}];}
+              {id:4,name:"Domotica Zigbee",category:"other",status:"active",notes:"Lista componenti da definire.",created_at:"2026-04-22 08:10:00",updated_at:"2026-04-22 08:10:00"}];
+    components=[
+      {id:1,project_id:1,name:"PicoPSU RGEEK 1106",description:"DC-DC 160W",shop:"Amazon",url:null,estimated_price:24.9,quantity:1,priority:"high",status:"delivered",created_at:"2026-03-15 10:00:00"},
+      {id:2,project_id:1,name:"Mean Well LRS-150-12",description:"Alimentatore 12V open frame",shop:"Amazon",url:null,estimated_price:19.9,quantity:1,priority:"high",status:"to_buy",created_at:"2026-05-20 10:00:00"},
+      {id:3,project_id:4,name:"Sensore movimento Zigbee",description:"Aqara P1",shop:"AliExpress",url:null,estimated_price:6.5,quantity:3,priority:"medium",status:"to_buy",created_at:"2026-04-25 10:00:00"},
+      {id:4,project_id:4,name:"Kit resistenze 10k",description:null,shop:"Action",url:null,estimated_price:2.0,quantity:1,priority:"low",status:"to_buy",created_at:"2026-04-25 10:05:00"},
+      {id:5,project_id:2,name:"Dominio (opzionale)",description:"Accesso via IP Tailscale, non necessario",shop:"",url:null,estimated_price:null,quantity:1,priority:"low",status:"cancelled",created_at:"2026-05-19 10:00:00"}];}
 }
  
 // ---------- Load ----------
 async function loadAll(){
-  try{ categories=await api("/categories"); projects=await api("/projects"); }
+  try{ categories=await api("/categories"); projects=await api("/projects"); components=await api("/components"); }
   catch(e){ toast("Errore nel caricamento","err"); }
   rebuildCatMap(); renderAll();
 }
 function rebuildCatMap(){ catMap={}; categories.forEach(c=>catMap[c.key]=c); }
-function renderAll(){ renderProjects(); renderCategories(); populateCatSelect(); }
+function renderAll(){ renderProjects(); renderCategories(); renderComponents(); populateCatSelect(); populateProjectSelects(); refreshShopSummary(); }
  
 // ---------- Render: categoria chip ----------
 function catChip(key){
@@ -511,11 +657,12 @@ document.querySelectorAll(".nav-item[data-view]").forEach(n=>n.addEventListener(
   const v=n.dataset.view;
   $("view-projects").hidden = v!=="projects";
   $("view-categories").hidden = v!=="categories";
+  $("view-components").hidden = v!=="components";
 }));
  
 // ---------- Filtri ----------
 $("filters").addEventListener("click",e=>{const x=e.target.closest(".filter");if(!x)return;
-  document.querySelectorAll(".filter").forEach(y=>y.classList.remove("active"));
+  $("filters").querySelectorAll(".filter").forEach(y=>y.classList.remove("active"));
   x.classList.add("active");currentFilter=x.dataset.f;renderProjects();});
  
 // ---------- Doppio click sulla riga → modifica ----------
@@ -542,6 +689,137 @@ document.querySelector('#view-projects thead').addEventListener("click",e=>{
   setSort(th.dataset.sort);
 });
 updateSortHeaders();
+ 
+// ====================== COMPONENTI ======================
+function populateProjectSelects(){
+  const opts=projects.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("");
+  // select del modale
+  const sel=f.kProject, cur=sel.value;
+  sel.innerHTML=opts||`<option value="" disabled>Nessun progetto — creane uno prima</option>`;
+  if(cur && projects.some(p=>String(p.id)===cur)) sel.value=cur;
+  // select del filtro
+  const fil=$("compProjFilter");
+  fil.innerHTML=`<option value="all">Tutti i progetti</option>`+opts;
+  fil.value=(compProj==="all"||projects.some(p=>String(p.id)===String(compProj)))?compProj:"all";
+  compProj=fil.value;
+}
+ 
+function projChip(c){
+  const cat=catMap[c.project_category]||{color:"#7b8694"};
+  return `<span class="chip" style="color:${cat.color};background:${rgba(cat.color,.12)};border-color:${rgba(cat.color,.28)}"><span class="d"></span>${esc(c.project_name||"—")}</span>`;
+}
+ 
+async function refreshShopSummary(){
+  try{ shopData = DEMO ? shopSummaryDemo() : await api("/shopping-list/summary"); }
+  catch(e){ shopData=[]; }
+  // se il negozio attivo non ha più pezzi da comprare, lo deseleziono
+  if(activeShop && !shopData.some(s=>s.shop===activeShop)) activeShop=null;
+  paintShopCards();
+}
+function paintShopCards(){
+  const box=$("shopSummary");
+  if(!shopData.length){ box.innerHTML=`<div class="shophint" style="margin:0">Niente da comprare al momento.</div>`; return; }
+  box.innerHTML=shopData.map(s=>`<button class="shopcard ${activeShop===s.shop?'active':''}" data-shop="${esc(s.shop)}">
+    <div class="sc-shop"><span class="sc-dot"></span>${esc(s.shop)}</div>
+    <div class="sc-meta"><span>${s.items} pezz${s.items===1?'o':'i'}</span><span class="sc-tot">${fmtEur(s.total)}</span></div>
+  </button>`).join("");
+}
+ 
+function renderComponents(){
+  $("navComponents").textContent=components.length;
+  const q=($("compSearch").value||"").toLowerCase().trim();
+  let list=components.slice();
+  if(compFilter!=="all") list=list.filter(c=>c.status===compFilter);
+  if(compProj!=="all")   list=list.filter(c=>String(c.project_id)===String(compProj));
+  if(activeShop)         list=list.filter(c=>((c.shop&&c.shop.trim())||"—")===activeShop);
+  if(q) list=list.filter(c=>(c.name+" "+(c.description||"")+" "+(c.shop||"")+" "+(c.project_name||"")).toLowerCase().includes(q));
+  list.sort((a,b)=>(PR_RANK[a.priority]??9)-(PR_RANK[b.priority]??9)||(a.name||"").localeCompare(b.name||""));
+ 
+  const tb=$("tbodyK");
+  if(!list.length){ tb.innerHTML=`<tr><td colspan="8"><div class="empty">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    <h3>${components.length?"Nessun risultato":"Nessun componente"}</h3>
+    <div>${components.length?"Prova a cambiare filtro o ricerca.":"Aggiungine uno con “Nuovo componente”."}</div></div></td></tr>`; return; }
+  tb.innerHTML=list.map((c,i)=>{
+    const ext=c.url?`<a class="ext" href="${esc(c.url)}" target="_blank" rel="noopener" title="Apri link" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3h7v7"/><path d="M10 14 21 3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg></a>`:"";
+    return `<tr data-id="${c.id}" style="animation-delay:${i*18}ms">
+    <td class="name"><span class="id">#${c.id}</span>${esc(c.name)}${ext}${c.description?`<span class="csub">${esc(c.description)}</span>`:""}</td>
+    <td>${projChip(c)}</td>
+    <td>${esc(c.shop||"—")}</td>
+    <td class="qty">${c.quantity??1}</td>
+    <td class="price">${fmtEur(c.estimated_price)}</td>
+    <td><span class="chip pr-${c.priority}"><span class="d"></span>${PR_LABEL[c.priority]||c.priority}</span></td>
+    <td><span class="chip cs-${c.status}"><span class="d"></span>${CS_LABEL[c.status]||c.status}</span></td>
+    <td class="actions"><span class="row-actions">
+      <button class="btn sm ghost" onclick='openComponent(${c.id})' title="Modifica"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>
+      <button class="btn sm ghost danger" onclick='delComponent(${c.id})' title="Elimina"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+    </span></td></tr>`;
+  }).join("");
+}
+ 
+// filtro stato (scoped al proprio contenitore)
+$("compFilters").addEventListener("click",e=>{const x=e.target.closest(".filter");if(!x)return;
+  $("compFilters").querySelectorAll(".filter").forEach(y=>y.classList.remove("active"));
+  x.classList.add("active");compFilter=x.dataset.f;renderComponents();});
+function onCompProjFilter(){ compProj=$("compProjFilter").value; renderComponents(); }
+ 
+// click su una scheda negozio della lista spesa → filtra per quel negozio
+$("shopSummary").addEventListener("click",e=>{
+  const card=e.target.closest(".shopcard"); if(!card) return;
+  const shop=card.dataset.shop;
+  activeShop=(activeShop===shop)?null:shop;
+  if(activeShop){ compFilter="to_buy";
+    $("compFilters").querySelectorAll(".filter").forEach(y=>y.classList.toggle("active",y.dataset.f==="to_buy")); }
+  paintShopCards(); renderComponents();
+});
+ 
+// doppio click sulla riga → modifica
+$("tbodyK").addEventListener("dblclick",e=>{
+  if(e.target.closest(".row-actions")||e.target.closest("a")) return;
+  const tr=e.target.closest("tr[data-id]"); if(!tr) return;
+  openComponent(Number(tr.dataset.id));
+});
+ 
+function openComponent(id){
+  populateProjectSelects();
+  if(id){const c=components.find(x=>x.id===id);$("kTitle").textContent="Modifica componente";
+    f.kId.value=c.id;f.kName.value=c.name;f.kShop.value=c.shop||"";f.kQty.value=c.quantity??1;
+    f.kPrice.value=c.estimated_price??"";f.kPriority.value=c.priority||"medium";f.kStatus.value=c.status||"to_buy";
+    f.kUrl.value=c.url||"";f.kDesc.value=c.description||"";
+    if(projects.some(p=>p.id===c.project_id)) f.kProject.value=String(c.project_id);
+  }else{$("kTitle").textContent="Nuovo componente";
+    f.kId.value="";f.kName.value="";f.kShop.value="";f.kQty.value=1;f.kPrice.value="";
+    f.kPriority.value="medium";f.kStatus.value="to_buy";f.kUrl.value="";f.kDesc.value="";
+    if(compProj!=="all") f.kProject.value=String(compProj);
+    else if(projects[0]) f.kProject.value=String(projects[0].id);}
+  $("ovK").classList.add("open");setTimeout(()=>f.kName.focus(),120);
+}
+function closeComponent(){$("ovK").classList.remove("open");}
+async function saveComponent(){
+  const name=f.kName.value.trim();
+  if(!name){toast("Il nome è obbligatorio","err");f.kName.focus();return;}
+  if(!f.kProject.value){toast("Crea prima un progetto a cui associare il componente","err");return;}
+  const qty=parseInt(f.kQty.value,10);
+  const price=f.kPrice.value===""?null:parseFloat(f.kPrice.value);
+  const payload={project_id:Number(f.kProject.value),name,
+    shop:f.kShop.value.trim()||null,url:f.kUrl.value.trim()||null,
+    estimated_price:(price===null||isNaN(price))?null:price,
+    quantity:(isNaN(qty)||qty<1)?1:qty,priority:f.kPriority.value,status:f.kStatus.value,
+    description:f.kDesc.value.trim()||null};
+  const id=f.kId.value,btn=$("kSave");btn.disabled=true;
+  try{
+    if(id) await api(`/components/${id}`,{method:"PATCH",body:JSON.stringify(payload)});
+    else   await api(`/components`,{method:"POST",body:JSON.stringify(payload)});
+    await loadAll();closeComponent();toast(id?"Componente aggiornato":"Componente creato","ok");
+  }catch(e){toast("Errore: "+e.message,"err");}finally{btn.disabled=false;}
+}
+async function delComponent(id){
+  const c=components.find(x=>x.id===id);
+  if(!confirm(`Eliminare il componente “${c.name}”?`))return;
+  try{await api(`/components/${id}`,{method:"DELETE"});await loadAll();toast("Componente eliminato","ok");}
+  catch(e){toast("Errore: "+e.message,"err");}
+}
+// ====================== /COMPONENTI ======================
  
 // ---------- Select categoria + creazione al volo ----------
 function populateCatSelect(keep){
@@ -635,11 +913,12 @@ async function delCat(id){
 // ---------- Toast / overlay close / esc ----------
 function toast(msg,type=""){const el=document.createElement("div");el.className="toast "+type;el.textContent=msg;
   $("toasts").appendChild(el);setTimeout(()=>{el.classList.add("out");setTimeout(()=>el.remove(),250);},2800);}
-["ovP","ovC"].forEach(o=>$(o).addEventListener("click",e=>{if(e.target.id===o)$(o).classList.remove("open");}));
-document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeProject();closeCat();}});
+["ovP","ovC","ovK"].forEach(o=>$(o).addEventListener("click",e=>{if(e.target.id===o)$(o).classList.remove("open");}));
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeProject();closeCat();closeComponent();}});
  
 // ---------- Boot ----------
 (async()=>{ await checkConn(); if(!DEMO){ await loadAll(); } else { rebuildCatMap(); renderAll(); } })();
 </script>
 </body>
 </html>
+ 
