@@ -1,0 +1,37 @@
+version: "3.8"
+
+services:
+  gilpa-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gilpa-backend
+    restart: unless-stopped
+    ports:
+      - "${GILPA_PORT_BACKEND:-8470}:8000"
+    volumes:
+      - ./data:/app/data          # database SQLite persistente
+      - ./backend:/app/src        # codice sorgente (per sviluppo)
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - DATABASE_PATH=/app/data/gilpa.db
+      - TZ=Europe/Rome
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  gilpa-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: gilpa-frontend
+    restart: unless-stopped
+    ports:
+      - "${GILPA_PORT_FRONTEND:-8471}:80"
+    depends_on:
+      - gilpa-backend
+    environment:
+      - TZ=Europe/Rome
+

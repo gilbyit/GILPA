@@ -1,0 +1,10 @@
+{
+    "name": "GILPA",
+    "short_name": "GILPA",
+    "description": "Gil's Personal Assistant",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#1a1a2e",
+    "theme_color": "#4ecca3",
+    "icons": []
+}

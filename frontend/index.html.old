@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GILPA</title>
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #1a1a2e; color: #eee;
+            display: flex; align-items: center; justify-content: center;
+            min-height: 100vh;
+        }
+        .container { text-align: center; }
+        h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        p { color: #888; }
+        .status { margin-top: 2rem; color: #4ecca3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GILPA</h1>
+        <p>Gil's Personal Assistant</p>
+        <div class="status" id="status">Connessione...</div>
+    </div>
+    <script>
+        fetch('/api/projects')
+            .then(r => r.json())
+            .then(d => {
+                document.getElementById('status').textContent =
+                    `Backend OK — ${d.length} progetti attivi`;
+            })
+            .catch(() => {
+                document.getElementById('status').textContent =
+                    'Backend non raggiungibile';
+                document.getElementById('status').style.color = '#e74c3c';
+            });
+    </script>
+</body>
+</html>

@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GILPA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0e1016; --bg-2:#14171f; --panel:#181c25; --panel-2:#1e232e;
+    --line:#272d39; --line-2:#333b49;
+    --txt:#e6e9ef; --txt-2:#9aa3b2; --txt-3:#626b7a;
+    --accent:#3d7bfd; --accent-2:#2c63d6; --accent-sf:rgba(61,123,253,.14);
+    --green:#34d399; --amber:#f6c454; --violet:#a78bfa; --red:#f87171; --slate:#7b8694;
+    --radius:9px; --sidebar:232px; --topbar:56px;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.28);
+    font-family:'IBM Plex Sans',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:radial-gradient(1200px 600px at 80% -10%, rgba(61,123,253,.07), transparent 60%),var(--bg);
+    color:var(--txt);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  ::selection{background:var(--accent-sf)}
+  .mono{font-family:'IBM Plex Mono',monospace}
+  [hidden]{display:none!important}
+ 
+  .app{display:grid;grid-template-columns:var(--sidebar) 1fr;grid-template-rows:var(--topbar) 1fr;min-height:100vh}
+  .topbar{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:0 20px;background:var(--bg-2);
+    border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.5px}
+  .brand .logo{width:28px;height:28px;border-radius:7px;display:grid;place-items:center;
+    background:linear-gradient(145deg,var(--accent),#6f4bff);
+    box-shadow:0 0 0 1px rgba(255,255,255,.08) inset,0 4px 12px rgba(61,123,253,.4);
+    font-family:'IBM Plex Mono';font-weight:600;font-size:15px;color:#fff}
+  .brand small{font-weight:400;color:var(--txt-3);font-size:11px;letter-spacing:.3px}
+  .topbar .spacer{flex:1}
+  .conn{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--txt-2);
+    padding:5px 11px;border:1px solid var(--line);border-radius:100px;background:var(--panel)}
+  .conn .dot{width:8px;height:8px;border-radius:50%;background:var(--slate);box-shadow:0 0 0 3px rgba(123,134,148,.15)}
+  .conn.online .dot{background:var(--green);box-shadow:0 0 0 3px rgba(52,211,153,.16)}
+  .conn.demo .dot{background:var(--amber);box-shadow:0 0 0 3px rgba(246,196,84,.16)}
+ 
+  .sidebar{background:var(--bg-2);border-right:1px solid var(--line);padding:14px 12px;display:flex;flex-direction:column;gap:3px}
+  .nav-label{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt-3);padding:14px 12px 6px}
+  .nav-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:7px;color:var(--txt-2);
+    cursor:pointer;font-weight:500;user-select:none;transition:.12s}
+  .nav-item svg{width:17px;height:17px;flex:none;opacity:.85}
+  .nav-item:hover{background:var(--panel);color:var(--txt)}
+  .nav-item.active{background:var(--accent-sf);color:#dce6ff;box-shadow:inset 2px 0 0 var(--accent)}
+  .nav-item.soon{opacity:.4;cursor:default}
+  .nav-item.soon:hover{background:transparent;color:var(--txt-2)}
+  .nav-item .badge{margin-left:auto;font-size:10px;background:var(--line);color:var(--txt-2);
+    padding:1px 7px;border-radius:100px;font-family:'IBM Plex Mono'}
+  .sidebar .foot{margin-top:auto;padding:12px;font-size:11px;color:var(--txt-3)}
+ 
+  .content{padding:26px 30px;overflow:auto}
+  .page-head{display:flex;align-items:flex-end;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+  .page-head h1{font-size:22px;font-weight:600;letter-spacing:.2px}
+  .page-head p{color:var(--txt-2);font-size:13px;margin-top:2px}
+  .page-head .spacer{flex:1}
+ 
+  .btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-2);background:var(--panel-2);
+    color:var(--txt);padding:8px 14px;border-radius:7px;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:.12s}
+  .btn:hover{border-color:var(--accent);background:var(--panel)}
+  .btn svg{width:16px;height:16px}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 4px 14px rgba(61,123,253,.32)}
+  .btn.primary:hover{background:var(--accent-2);border-color:var(--accent-2)}
+  .btn.ghost{background:transparent;border-color:transparent;color:var(--txt-2)}
+  .btn.ghost:hover{background:var(--panel);color:var(--txt)}
+  .btn.danger:hover{border-color:var(--red);color:var(--red)}
+  .btn.sm{padding:6px 9px;font-size:12px}
+ 
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;position:relative;overflow:hidden}
+  .stat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c,var(--accent))}
+  .stat .k{font-size:12px;color:var(--txt-2)}
+  .stat .v{font-family:'IBM Plex Mono';font-size:30px;font-weight:600;line-height:1.1;margin-top:6px}
+ 
+  .toolbar{display:flex;align-items:center;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+  .filters{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:3px}
+  .filter{padding:6px 13px;border-radius:6px;font-size:12.5px;font-weight:500;color:var(--txt-2);cursor:pointer;transition:.12s}
+  .filter:hover{color:var(--txt)}
+  .filter.active{background:var(--panel-2);color:var(--txt);box-shadow:var(--shadow)}
+  .search{flex:1;min-width:180px;max-width:320px;position:relative}
+  .search input{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:8px;
+    padding:8px 12px 8px 34px;color:var(--txt);font-family:inherit;font-size:13px;outline:none;transition:.12s}
+  .search input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-sf)}
+  .search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--txt-3)}
+ 
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  table{width:100%;border-collapse:collapse}
+  thead th{text-align:left;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--txt-3);
+    font-weight:600;padding:12px 18px;border-bottom:1px solid var(--line);background:var(--bg-2)}
+  tbody tr{border-bottom:1px solid var(--line);transition:background .12s;animation:rowin .35s ease both}
+  tbody tr:last-child{border-bottom:none}
+  tbody tr:hover{background:var(--panel-2)}
+  td{padding:13px 18px;vertical-align:middle}
+  td.name{font-weight:600}
+  td.name .id{font-family:'IBM Plex Mono';font-size:11px;color:var(--txt-3);font-weight:400;margin-right:8px}
+  td.notes{color:var(--txt-2);font-size:12.5px}
+  td.notes span{display:inline-block;max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
+  td.num{font-family:'IBM Plex Mono';color:var(--txt-2)}
+  td.actions{text-align:right;white-space:nowrap}
+  .row-actions{display:inline-flex;gap:4px;opacity:.35;transition:.12s}
+  tr:hover .row-actions{opacity:1}
+ 
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:3px 10px;border-radius:100px;border:1px solid transparent}
+  .chip .d{width:7px;height:7px;border-radius:50%;background:currentColor}
+  .st-active{color:var(--green);background:rgba(52,211,153,.1)}
+  .st-paused{color:var(--amber);background:rgba(246,196,84,.1)}
+  .st-done{color:var(--slate);background:rgba(123,134,148,.12)}
+ 
+  .swatch{width:22px;height:22px;border-radius:6px;border:1px solid rgba(255,255,255,.12);flex:none}
+ 
+  .empty{padding:56px 20px;text-align:center;color:var(--txt-3)}
+  .empty svg{width:40px;height:40px;opacity:.4;margin-bottom:12px}
+  .empty h3{color:var(--txt-2);font-weight:600;margin-bottom:4px}
+ 
+  .overlay{position:fixed;inset:0;background:rgba(6,8,12,.66);backdrop-filter:blur(3px);display:grid;place-items:center;
+    z-index:50;opacity:0;pointer-events:none;transition:.18s}
+  .overlay.open{opacity:1;pointer-events:auto}
+  .modal{width:min(480px,92vw);background:var(--panel);border:1px solid var(--line-2);border-radius:13px;
+    box-shadow:var(--shadow);transform:translateY(8px) scale(.98);transition:.18s;overflow:hidden}
+  .overlay.open .modal{transform:none}
+  .modal header{display:flex;align-items:center;padding:18px 22px;border-bottom:1px solid var(--line)}
+  .modal header h2{font-size:16px;font-weight:600}
+  .modal header .x{margin-left:auto;cursor:pointer;color:var(--txt-3);display:grid;place-items:center;width:30px;height:30px;border-radius:7px;transition:.12s}
+  .modal header .x:hover{background:var(--panel-2);color:var(--txt)}
+  .modal .body{padding:22px;display:flex;flex-direction:column;gap:16px}
+  .field label{display:block;font-size:12px;font-weight:500;color:var(--txt-2);margin-bottom:6px}
+  .field input,.field select,.field textarea{width:100%;background:var(--bg-2);border:1px solid var(--line-2);border-radius:8px;
+    padding:10px 12px;color:var(--txt);font-family:inherit;font-size:13.5px;outline:none;transition:.12s}
+  .field textarea{resize:vertical;min-height:74px}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-sf)}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .inline-new{display:flex;gap:8px;margin-top:8px}
+  .inline-new input{flex:1}
+  .modal footer{display:flex;justify-content:flex-end;gap:10px;padding:16px 22px;border-top:1px solid var(--line);background:var(--bg-2)}
+ 
+  /* color picker */
+  .colorpick{display:flex;align-items:center;gap:10px}
+  .colorpick input[type=color]{width:42px;height:38px;padding:3px;background:var(--bg-2);border:1px solid var(--line-2);border-radius:8px;cursor:pointer}
+  .swatches{display:flex;gap:6px;flex-wrap:wrap}
+  .sw{width:22px;height:22px;border-radius:6px;cursor:pointer;border:2px solid transparent;transition:.1s}
+  .sw:hover{transform:scale(1.12)}
+  .sw.sel{border-color:#fff}
+ 
+  .toasts{position:fixed;right:20px;bottom:20px;display:flex;flex-direction:column;gap:10px;z-index:80}
+  .toast{display:flex;align-items:center;gap:10px;background:var(--panel-2);border:1px solid var(--line-2);
+    border-left:3px solid var(--accent);border-radius:9px;padding:12px 16px;min-width:240px;box-shadow:var(--shadow);
+    animation:toastin .25s ease both;font-size:13px}
+  .toast.ok{border-left-color:var(--green)}
+  .toast.err{border-left-color:var(--red)}
+  .toast.out{animation:toastout .25s ease both}
+ 
+  .demo-banner{display:none;align-items:center;gap:10px;background:rgba(246,196,84,.09);border:1px solid rgba(246,196,84,.25);
+    color:#f0d188;border-radius:9px;padding:10px 14px;font-size:12.5px;margin-bottom:18px}
+  .demo-banner.show{display:flex}
+ 
+  @keyframes rowin{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+  @keyframes toastin{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+  @keyframes toastout{to{opacity:0;transform:translateX(20px)}}
+ 
+  @media(max-width:760px){
+    :root{--sidebar:0px}
+    .sidebar{display:none}
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .content{padding:18px}
+    td.notes{display:none}#view-projects thead th:nth-child(4){display:none}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand"><div class="logo mono">G</div><div>GILPA <small>· Gil's Personal Assistant</small></div></div>
+    <div class="spacer"></div>
+    <div class="conn" id="conn"><span class="dot"></span><span id="connText">connessione…</span></div>
+  </div>
+ 
+  <nav class="sidebar">
+    <div class="nav-label">Gestione</div>
+    <div class="nav-item active" data-view="projects">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>
+      Progetti <span class="badge mono" id="navProjects">0</span>
+    </div>
+    <div class="nav-item" data-view="categories">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.6 13.4 11 3.8a2 2 0 0 0-1.4-.6H4a1 1 0 0 0-1 1v5.6a2 2 0 0 0 .6 1.4l9.6 9.6a2 2 0 0 0 2.8 0l4.6-4.6a2 2 0 0 0 0-2.8z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg>
+      Categorie <span class="badge mono" id="navCats">0</span>
+    </div>
+    <div class="nav-item soon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Componenti <span class="badge">soon</span>
+    </div>
+    <div class="nav-item soon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      Pomodoro <span class="badge">soon</span>
+    </div>
+    <div class="foot mono">v0.3.0 · NASGUL</div>
+  </nav>
+ 
+  <main class="content">
+    <div class="demo-banner" id="demoBanner">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      <span>Backend non raggiungibile — modalità <b>demo</b> con dati di esempio. Le modifiche non vengono salvate.</span>
+    </div>
+ 
+    <!-- ============ VIEW: PROGETTI ============ -->
+    <section id="view-projects">
+      <div class="page-head">
+        <div><h1>Progetti</h1><p>Gestisci i tuoi progetti hardware, software e creativi.</p></div>
+        <div class="spacer"></div>
+        <button class="btn primary" onclick="openProject()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+          Nuovo progetto
+        </button>
+      </div>
+      <div class="stats" id="stats"></div>
+      <div class="toolbar">
+        <div class="filters" id="filters">
+          <div class="filter active" data-f="all">Tutti</div>
+	  <div class="filter" data-f="new">Nuovi</div>
+          <div class="filter" data-f="active">Attivi</div>
+          <div class="filter" data-f="paused">In pausa</div>
+          <div class="filter" data-f="done">Completati</div>
+        </div>
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="search" placeholder="Cerca progetto…" oninput="renderProjects()">
+        </div>
+      </div>
+      <div class="panel">
+        <table><thead><tr><th>Nome</th><th>Categoria</th><th>Stato</th><th>Note</th><th></th></tr></thead>
+        <tbody id="tbodyP"></tbody></table>
+      </div>
+    </section>
+ 
+    <!-- ============ VIEW: CATEGORIE ============ -->
+    <section id="view-categories" hidden>
+      <div class="page-head">
+        <div><h1>Categorie</h1><p>Crea e organizza le categorie. Il conteggio mostra quanti progetti le usano.</p></div>
+        <div class="spacer"></div>
+        <button class="btn primary" onclick="openCat()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+          Nuova categoria
+        </button>
+      </div>
+      <div class="panel">
+        <table><thead><tr><th>Categoria</th><th>Chiave</th><th>Progetti</th><th></th></tr></thead>
+        <tbody id="tbodyC"></tbody></table>
+      </div>
+    </section>
+  </main>
+</div>
+ 
+<!-- Modal Progetto -->
+<div class="overlay" id="ovP">
+  <div class="modal">
+    <header><h2 id="pTitle">Nuovo progetto</h2>
+      <div class="x" onclick="closeProject()"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></div>
+    </header>
+    <div class="body">
+      <input type="hidden" id="p-id">
+      <div class="field"><label>Nome</label>
+        <input id="p-name" placeholder="es. NASGUL, Album Lia, Domotica Zigbee" autocomplete="off"></div>
+      <div class="field-row">
+        <div class="field"><label>Categoria</label>
+          <select id="p-category" onchange="onCatSelect()"></select>
+          <div class="inline-new" id="p-newcat" hidden>
+            <input id="p-newcat-name" placeholder="Nome nuova categoria…" autocomplete="off">
+            <button class="btn primary sm" onclick="createCatInline()">Crea</button>
+          </div>
+        </div>
+        <div class="field"><label>Stato</label>
+          <select id="p-status">
+		 <option value="new">Nuovo</option>
+            <option value="active">Attivo</option>
+		<option value="paused">In pausa</option>
+		<option value="done">Completato</option>
+          </select></div>
+      </div>
+      <div class="field"><label>Note</label>
+        <textarea id="p-notes" placeholder="Descrizione libera, contesto, prossimi passi…"></textarea></div>
+    </div>
+    <footer><button class="btn ghost" onclick="closeProject()">Annulla</button>
+      <button class="btn primary" id="pSave" onclick="saveProject()">Salva</button></footer>
+  </div>
+</div>
+ 
+<!-- Modal Categoria -->
+<div class="overlay" id="ovC">
+  <div class="modal">
+    <header><h2 id="cTitle">Nuova categoria</h2>
+      <div class="x" onclick="closeCat()"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></div>
+    </header>
+    <div class="body">
+      <input type="hidden" id="c-id">
+      <div class="field"><label>Nome</label>
+        <input id="c-label" placeholder="es. Elettronica, Foto, Lavoro" autocomplete="off"></div>
+      <div class="field"><label>Colore</label>
+        <div class="colorpick">
+          <input type="color" id="c-color" value="#3d7bfd">
+          <div class="swatches" id="cSwatches"></div>
+        </div>
+      </div>
+    </div>
+    <footer><button class="btn ghost" onclick="closeCat()">Annulla</button>
+      <button class="btn primary" id="cSave" onclick="saveCat()">Salva</button></footer>
+  </div>
+</div>
+ 
+<div class="toasts" id="toasts"></div>
+ 
+<script>
+// ===== Config: backend sullo stesso host, porta 8470 (CORS aperto).
+//       Con proxy nginx /api → backend, sostituisci con: const API = "/api";
+const API = `${location.protocol}//${location.hostname}:8470/api`;
+const HEALTH = `${location.protocol}//${location.hostname}:8470/health`;
+ 
+let DEMO = false;
+let projects = [];
+let categories = [];
+let catMap = {};
+let currentFilter = "all";
+ 
+const ST_LABEL = {new:"Nuovo",active:"Attivo", paused:"In pausa", done:"Completato"};
+const PALETTE = ["#3d7bfd","#f6c454","#a78bfa","#34d399","#f87171","#22d3ee","#fb923c","#e879f9","#60a5fa","#a3e635"];
+ 
+const $ = id => document.getElementById(id);
+const esc = s => (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function rgba(hex,a){const h=hex.replace("#","");const n=parseInt(h.length===3?h.replace(/(.)/g,"$1$1"):h,16);
+  return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`}
+function slug(s){return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||"cat"}
+ 
+// form refs
+const f={pId:$("p-id"),pName:$("p-name"),pCat:$("p-category"),pStatus:$("p-status"),pNotes:$("p-notes"),
+         cId:$("c-id"),cLabel:$("c-label"),cColor:$("c-color")};
+ 
+// ---------- API ----------
+async function api(path,opts={}){
+  if(DEMO) return mockApi(path,opts);
+  const res=await fetch(API+path,{headers:{"Content-Type":"application/json"},...opts});
+  if(!res.ok) throw new Error((await res.json().catch(()=>({}))).detail||res.statusText);
+  return res.status===204?null:res.json();
+}
+function withCounts(){ return categories.map(c=>({...c,project_count:projects.filter(p=>p.category===c.key).length})); }
+function mockApi(path,opts={}){
+  const m=(opts.method||"GET").toUpperCase();
+  if(path==="/projects"&&m==="GET") return [...projects];
+  if(path==="/projects"&&m==="POST"){const b=JSON.parse(opts.body);b.id=Math.max(0,...projects.map(p=>p.id))+1;projects.unshift(b);return b;}
+  if(path==="/categories"&&m==="GET") return withCounts();
+  if(path==="/categories"&&m==="POST"){const b=JSON.parse(opts.body);
+    let k=slug(b.label),i=1;while(categories.some(c=>c.key===k)){i++;k=slug(b.label)+"-"+i;}
+    const cat={id:Math.max(0,...categories.map(c=>c.id))+1,key:k,label:b.label,color:b.color||PALETTE[categories.length%PALETTE.length],project_count:0};
+    categories.push(cat);return cat;}
+  const id=parseInt(path.split("/")[2]||0);
+  if(path.startsWith("/projects/")){const i=projects.findIndex(p=>p.id===id);
+    if(m==="PATCH"){Object.assign(projects[i],JSON.parse(opts.body));return projects[i];}
+    if(m==="DELETE"){projects.splice(i,1);return null;}}
+  if(path.startsWith("/categories/")){const i=categories.findIndex(c=>c.id===id);
+    if(m==="PATCH"){Object.assign(categories[i],JSON.parse(opts.body));return categories[i];}
+    if(m==="DELETE"){const used=projects.filter(p=>p.category===categories[i].key).length;
+      if(used) throw new Error(`Categoria in uso da ${used} progetto/i. Riassegnali prima di eliminarla.`);
+      categories.splice(i,1);return null;}}
+  return null;
+}
+ 
+// ---------- Connessione ----------
+async function checkConn(){
+  const c=$("conn"),t=$("connText");
+  try{const r=await fetch(HEALTH);if(!r.ok)throw 0;const j=await r.json();
+    c.className="conn online";t.textContent=`backend online · v${j.version}`;
+  }catch(e){DEMO=true;c.className="conn demo";t.textContent="demo (offline)";
+    $("demoBanner").classList.add("show");
+    categories=[{id:1,key:"hardware",label:"Hardware",color:"#f6c454"},{id:2,key:"software",label:"Software",color:"#3d7bfd"},
+                {id:3,key:"music",label:"Musica",color:"#a78bfa"},{id:4,key:"other",label:"Altro",color:"#7b8694"}];
+    projects=[{id:1,name:"NASGUL",category:"hardware",status:"active",notes:"Home server OMV. Pico ATX + Mean Well, ~49W."},
+              {id:2,name:"GILPA",category:"software",status:"active",notes:"Assistente personale self-hosted. In costruzione."},
+              {id:3,name:"Album Lia",category:"music",status:"paused",notes:"Sessioni da riprendere."},
+              {id:4,name:"Domotica Zigbee",category:"other",status:"active",notes:"Lista componenti da definire."}];}
+}
+ 
+// ---------- Load ----------
+async function loadAll(){
+  try{ categories=await api("/categories"); projects=await api("/projects"); }
+  catch(e){ toast("Errore nel caricamento","err"); }
+  rebuildCatMap(); renderAll();
+}
+function rebuildCatMap(){ catMap={}; categories.forEach(c=>catMap[c.key]=c); }
+function renderAll(){ renderProjects(); renderCategories(); populateCatSelect(); }
+ 
+// ---------- Render: categoria chip ----------
+function catChip(key){
+  const c=catMap[key]||{label:key,color:"#7b8694"};
+  return `<span class="chip" style="color:${c.color};background:${rgba(c.color,.12)};border-color:${rgba(c.color,.28)}"><span class="d"></span>${esc(c.label)}</span>`;
+}
+const stat=(k,v,c)=>`<div class="stat" style="--c:${c}"><div class="k">${k}</div><div class="v">${v}</div></div>`;
+ 
+// ---------- Render: progetti ----------
+function renderProjects(){
+  const q=($("search").value||"").toLowerCase().trim();
+  let list=projects.filter(p=>currentFilter==="all"||p.status===currentFilter);
+  if(q) list=list.filter(p=>(p.name+" "+(p.notes||"")).toLowerCase().includes(q));
+ 
+  const s={total:projects.length,new:0,active:0,paused:0,done:0};
+  projects.forEach(p=>s[p.status]!==undefined&&s[p.status]++);
+  $("navProjects").textContent=s.total;
+  $("stats").innerHTML=stat("Totale",s.total,"var(--accent)")+stat("Nuovi",s.newactive,"var(--pink)")+stat("Attivi",s.active,"var(--green)")
+    +stat("In pausa",s.paused,"var(--amber)")+stat("Completati",s.done,"var(--slate)");
+ 
+  const tb=$("tbodyP");
+  if(!list.length){tb.innerHTML=`<tr><td colspan="5"><div class="empty">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/></svg>
+    <h3>${q||currentFilter!=="all"?"Nessun risultato":"Nessun progetto"}</h3>
+    <div>${q||currentFilter!=="all"?"Prova a cambiare filtro o ricerca.":"Aggiungine uno con “Nuovo progetto”."}</div></div></td></tr>`;return;}
+  tb.innerHTML=list.map((p,i)=>`<tr style="animation-delay:${i*22}ms">
+    <td class="name"><span class="id">#${p.id}</span>${esc(p.name)}</td>
+    <td>${catChip(p.category)}</td>
+    <td><span class="chip st-${p.status}"><span class="d"></span>${ST_LABEL[p.status]||p.status}</span></td>
+    <td class="notes"><span title="${esc(p.notes||"")}">${esc(p.notes||"—")}</span></td>
+    <td class="actions"><span class="row-actions">
+      <button class="btn sm ghost" onclick='openProject(${p.id})' title="Modifica"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>
+      <button class="btn sm ghost danger" onclick='delProject(${p.id})' title="Elimina"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+    </span></td></tr>`).join("");
+}
+ 
+// ---------- Render: categorie ----------
+function renderCategories(){
+  $("navCats").textContent=categories.length;
+  const tb=$("tbodyC");
+  const list = DEMO ? withCounts() : categories;
+  if(!list.length){tb.innerHTML=`<tr><td colspan="4"><div class="empty"><h3>Nessuna categoria</h3></div></td></tr>`;return;}
+  tb.innerHTML=list.map((c,i)=>`<tr style="animation-delay:${i*22}ms">
+    <td class="name"><span style="display:inline-flex;align-items:center;gap:11px">
+      <span class="swatch" style="background:${c.color}"></span>${esc(c.label)}</span></td>
+    <td class="mono" style="color:var(--txt-3);font-size:12px">${esc(c.key)}</td>
+    <td class="num">${c.project_count}</td>
+    <td class="actions"><span class="row-actions">
+      <button class="btn sm ghost" onclick='openCat(${c.id})' title="Modifica"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>
+      <button class="btn sm ghost danger" onclick='delCat(${c.id})' title="Elimina"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+    </span></td></tr>`).join("");
+}
+ 
+// ---------- Nav / view switch ----------
+document.querySelectorAll(".nav-item[data-view]").forEach(n=>n.addEventListener("click",()=>{
+  document.querySelectorAll(".nav-item").forEach(x=>x.classList.remove("active"));
+  n.classList.add("active");
+  const v=n.dataset.view;
+  $("view-projects").hidden = v!=="projects";
+  $("view-categories").hidden = v!=="categories";
+}));
+ 
+// ---------- Filtri ----------
+$("filters").addEventListener("click",e=>{const x=e.target.closest(".filter");if(!x)return;
+  document.querySelectorAll(".filter").forEach(y=>y.classList.remove("active"));
+  x.classList.add("active");currentFilter=x.dataset.f;renderProjects();});
+ 
+// ---------- Select categoria + creazione al volo ----------
+function populateCatSelect(keep){
+  const sel=f.pCat, cur=keep||sel.value;
+  sel.innerHTML=categories.map(c=>`<option value="${c.key}">${esc(c.label)}</option>`).join("")
+    +`<option disabled>──────────</option><option value="__new__">+ Nuova categoria…</option>`;
+  if(cur && categories.some(c=>c.key===cur)) sel.value=cur;
+}
+function onCatSelect(){
+  const isNew=f.pCat.value==="__new__";
+  $("p-newcat").hidden=!isNew;
+  if(isNew){ $("p-newcat-name").value=""; setTimeout(()=>$("p-newcat-name").focus(),50); }
+}
+async function createCatInline(){
+  const name=$("p-newcat-name").value.trim();
+  if(!name){ toast("Scrivi un nome per la categoria","err"); return; }
+  try{
+    const cat=await api("/categories",{method:"POST",body:JSON.stringify({label:name})});
+    if(!DEMO){ categories=await api("/categories"); } // ricarica con count reali
+    rebuildCatMap(); renderCategories();
+    populateCatSelect(cat.key); $("p-newcat").hidden=true;
+    toast(`Categoria “${cat.label}” creata`,"ok");
+  }catch(e){ toast("Errore: "+e.message,"err"); }
+}
+ 
+// ---------- Modal Progetto ----------
+function openProject(id){
+  populateCatSelect();
+  $("p-newcat").hidden=true;
+  if(id){const p=projects.find(x=>x.id===id);$("pTitle").textContent="Modifica progetto";
+    f.pId.value=p.id;f.pName.value=p.name;f.pStatus.value=p.status;f.pNotes.value=p.notes||"";
+    populateCatSelect(p.category);
+  }else{$("pTitle").textContent="Nuovo progetto";
+    f.pId.value="";f.pName.value="";f.pStatus.value="active";f.pNotes.value="";
+    if(categories[0]) f.pCat.value=categories[0].key;}
+  $("ovP").classList.add("open");setTimeout(()=>f.pName.focus(),120);
+}
+function closeProject(){$("ovP").classList.remove("open");}
+async function saveProject(){
+  const name=f.pName.value.trim();
+  if(!name){toast("Il nome è obbligatorio","err");f.pName.focus();return;}
+  if(f.pCat.value==="__new__"){toast("Crea prima la nuova categoria o scegline una","err");return;}
+  const payload={name,category:f.pCat.value,status:f.pStatus.value,notes:f.pNotes.value.trim()||null};
+  const id=f.pId.value,btn=$("pSave");btn.disabled=true;
+  try{
+    if(id) await api(`/projects/${id}`,{method:"PATCH",body:JSON.stringify(payload)});
+    else   await api(`/projects`,{method:"POST",body:JSON.stringify(payload)});
+    await loadAll();closeProject();toast(id?"Progetto aggiornato":"Progetto creato","ok");
+  }catch(e){toast("Errore: "+e.message,"err");}finally{btn.disabled=false;}
+}
+async function delProject(id){
+  const p=projects.find(x=>x.id===id);
+  if(!confirm(`Eliminare il progetto “${p.name}”?`))return;
+  try{await api(`/projects/${id}`,{method:"DELETE"});await loadAll();toast("Progetto eliminato","ok");}
+  catch(e){toast("Errore: "+e.message,"err");}
+}
+ 
+// ---------- Modal Categoria ----------
+$("cSwatches").innerHTML=PALETTE.map(c=>`<span class="sw" data-c="${c}" style="background:${c}"></span>`).join("");
+$("cSwatches").addEventListener("click",e=>{const s=e.target.closest(".sw");if(!s)return;
+  f.cColor.value=s.dataset.c;markSwatch();});
+function markSwatch(){document.querySelectorAll(".sw").forEach(s=>s.classList.toggle("sel",s.dataset.c.toLowerCase()===f.cColor.value.toLowerCase()));}
+f.cColor.addEventListener("input",markSwatch);
+ 
+function openCat(id){
+  if(id){const c=categories.find(x=>x.id===id);$("cTitle").textContent="Modifica categoria";
+    f.cId.value=c.id;f.cLabel.value=c.label;f.cColor.value=c.color;
+  }else{$("cTitle").textContent="Nuova categoria";
+    f.cId.value="";f.cLabel.value="";f.cColor.value=PALETTE[categories.length%PALETTE.length];}
+  markSwatch();$("ovC").classList.add("open");setTimeout(()=>f.cLabel.focus(),120);
+}
+function closeCat(){$("ovC").classList.remove("open");}
+async function saveCat(){
+  const label=f.cLabel.value.trim();
+  if(!label){toast("Il nome è obbligatorio","err");f.cLabel.focus();return;}
+  const payload={label,color:f.cColor.value};
+  const id=f.cId.value,btn=$("cSave");btn.disabled=true;
+  try{
+    if(id) await api(`/categories/${id}`,{method:"PATCH",body:JSON.stringify(payload)});
+    else   await api(`/categories`,{method:"POST",body:JSON.stringify(payload)});
+    await loadAll();closeCat();toast(id?"Categoria aggiornata":"Categoria creata","ok");
+  }catch(e){toast("Errore: "+e.message,"err");}finally{btn.disabled=false;}
+}
+async function delCat(id){
+  const c=categories.find(x=>x.id===id);
+  if(!confirm(`Eliminare la categoria “${c.label}”?`))return;
+  try{await api(`/categories/${id}`,{method:"DELETE"});await loadAll();toast("Categoria eliminata","ok");}
+  catch(e){toast(e.message,"err");}
+}
+ 
+// ---------- Toast / overlay close / esc ----------
+function toast(msg,type=""){const el=document.createElement("div");el.className="toast "+type;el.textContent=msg;
+  $("toasts").appendChild(el);setTimeout(()=>{el.classList.add("out");setTimeout(()=>el.remove(),250);},2800);}
+["ovP","ovC"].forEach(o=>$(o).addEventListener("click",e=>{if(e.target.id===o)$(o).classList.remove("open");}));
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeProject();closeCat();}});
+ 
+// ---------- Boot ----------
+(async()=>{ await checkConn(); if(!DEMO){ await loadAll(); } else { rebuildCatMap(); renderAll(); } })();
+</script>
+</body>
+</html>
