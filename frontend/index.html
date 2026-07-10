@@ -217,6 +217,23 @@
     color:#f0d188;border-radius:9px;padding:10px 14px;font-size:12.5px;margin-bottom:18px}
   .demo-banner.show{display:flex}
  
+  /* liste personalizzate */
+  .fields-ed{display:flex;flex-direction:column;gap:8px}
+  .frow{display:grid;grid-template-columns:minmax(0,1fr) 132px minmax(0,1fr) 34px;gap:8px;align-items:center}
+  .frow input,.frow select{width:100%;background:var(--bg-2);border:1px solid var(--line-2);border-radius:8px;
+    padding:9px 11px;color:var(--txt);font-family:inherit;font-size:13px;outline:none;transition:.12s}
+  .frow input:focus,.frow select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-sf)}
+  .frow .f-opts[data-off]{visibility:hidden}
+  .btn.ai{color:var(--violet)}
+  .btn.ai:hover{border-color:var(--violet)}
+  .btn.ai svg{width:14px;height:14px}
+  .btn .spin{animation:spin .9s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .aihint{font-size:11.5px;color:var(--txt-3)}
+  td .valchip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:3px 10px;
+    border-radius:100px;color:var(--accent);background:var(--accent-sf)}
+  #tbodyL tr{cursor:pointer;user-select:none;-webkit-user-select:none}
+
   @keyframes rowin{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
   @keyframes toastin{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
   @keyframes toastout{to{opacity:0;transform:translateX(20px)}}
@@ -253,11 +270,15 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
       Componenti <span class="badge mono" id="navComponents">0</span>
     </div>
+    <div class="nav-item" data-view="lists">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>
+      Liste <span class="badge mono" id="navLists">0</span>
+    </div>
     <div class="nav-item soon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
       Pomodoro <span class="badge">soon</span>
     </div>
-    <div class="foot mono">v0.4.0 · NASGUL</div>
+    <div class="foot mono">v0.5.0 · NASGUL</div>
   </nav>
  
   <main class="content">
@@ -354,6 +375,41 @@
           <th>Componente</th><th>Progetto</th><th>Negozio</th><th>Qtà</th><th>Prezzo</th><th>Priorità</th><th>Stato</th><th></th>
         </tr></thead>
         <tbody id="tbodyK"></tbody></table>
+      </div>
+    </section>
+
+    <!-- ============ VIEW: LISTE ============ -->
+    <section id="view-lists" hidden>
+      <div class="page-head">
+        <div><h1>Liste</h1><p>Liste personalizzate: definisci i campi tu o fatteli suggerire dall'AI.</p></div>
+        <div class="spacer"></div>
+        <button class="btn" id="btnEditList" onclick="openList(activeListId)" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+          Modifica lista
+        </button>
+        <button class="btn primary" onclick="openList()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+          Nuova lista
+        </button>
+      </div>
+
+      <div class="shophint" id="listHint">Le tue liste — toccane una per aprirla.</div>
+      <div class="shopgrid" id="listCards"></div>
+
+      <div class="toolbar" id="listToolbar" hidden>
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="itemSearch" placeholder="Cerca nella lista…" oninput="renderItems()">
+        </div>
+        <div class="spacer"></div>
+        <button class="btn primary" onclick="openItem()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+          Nuova voce
+        </button>
+      </div>
+
+      <div class="panel" id="listPanel" style="overflow-x:auto" hidden>
+        <table><thead id="theadL"></thead><tbody id="tbodyL"></tbody></table>
       </div>
     </section>
   </main>
@@ -472,6 +528,66 @@
   </div>
 </div>
  
+<!-- Modal Lista -->
+<div class="overlay" id="ovL">
+  <div class="modal wide">
+    <header><h2 id="lTitle">Nuova lista</h2>
+      <div class="x" onclick="closeList()"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></div>
+    </header>
+    <div class="body">
+      <input type="hidden" id="l-id">
+      <div class="field-row">
+        <div class="field"><label>Nome</label>
+          <input id="l-name" placeholder="es. Anime, Libri, Vini" autocomplete="off"></div>
+        <div class="field"><label>Descrizione <span class="aihint">(aiuta anche l'AI)</span></label>
+          <input id="l-desc" placeholder="es. Serie viste e da vedere" autocomplete="off"></div>
+      </div>
+      <div class="comp-sec">
+        <div class="comp-head">
+          <label>Campi</label>
+          <div class="spacer"></div>
+          <button class="btn sm ai" id="lSuggest" onclick="suggestFields()" title="Chiede a Claude una proposta di campi per questa lista">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.9 5.6L19.5 10l-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.4z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>
+            Suggerisci (AI)
+          </button>
+          <button class="btn sm" onclick="addFieldRow()">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+            Campo
+          </button>
+        </div>
+        <div class="fields-ed" id="l-fields"></div>
+        <div class="comp-empty" id="l-fields-empty">Nessun campo. Aggiungine con "Campo" o fatteli proporre dall'AI.</div>
+      </div>
+    </div>
+    <footer><button class="btn ghost" onclick="closeList()">Annulla</button>
+      <button class="btn danger" id="lDelete" onclick="delList()" hidden>Elimina lista</button>
+      <button class="btn primary" id="lSave" onclick="saveList()">Salva</button></footer>
+  </div>
+</div>
+
+<!-- Modal Voce -->
+<div class="overlay" id="ovI">
+  <div class="modal">
+    <header><h2 id="iTitle">Nuova voce</h2>
+      <div class="x" onclick="closeItem()"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></div>
+    </header>
+    <div class="body">
+      <input type="hidden" id="i-id">
+      <div class="comp-head" style="margin:0">
+        <label class="aihint" style="text-transform:none;letter-spacing:0" id="iAiHint">L'AI compila i campi vuoti usando il primo campo come titolo.</label>
+        <div class="spacer"></div>
+        <button class="btn sm ai" id="iSuggest" onclick="suggestItem()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.9 5.6L19.5 10l-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.4z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>
+          Compila (AI)
+        </button>
+      </div>
+      <div id="i-body" style="display:flex;flex-direction:column;gap:16px"></div>
+    </div>
+    <footer><button class="btn ghost" onclick="closeItem()">Annulla</button>
+      <button class="btn primary" id="iSave" onclick="saveItem()">Salva</button></footer>
+  </div>
+</div>
+
 <div class="toasts" id="toasts"></div>
  
 <script>
@@ -493,11 +609,18 @@ let compProj = "all";         // filtro progetto
 let activeShop = null;        // negozio selezionato dalla lista spesa
 let editingProjectId = null;  // progetto aperto nella scheda di modifica
 let shopData = [];            // cache riepilogo lista spesa
+let lists = [];               // liste personalizzate
+let activeListId = null;      // lista aperta
+let listItems = [];           // voci della lista aperta
+let draftFields = [];         // editor campi nel modale lista
+let draftDeleted = [];        // id campi esistenti rimossi (da confermare al salvataggio)
+let demoItems = {};           // demo: voci per lista
  
 const ST_LABEL = {new:"Nuovo",active:"Attivo", paused:"In pausa", done:"Completato"};
 const PR_LABEL = {high:"Alta", medium:"Media", low:"Bassa"};
 const PR_RANK  = {high:0, medium:1, low:2};
 const CS_LABEL = {to_buy:"Da comprare", ordered:"Ordinato", delivered:"Consegnato", cancelled:"Annullato"};
+const FT_LABEL = {text:"Testo", number:"Numero", boolean:"Sì/No", date:"Data", url:"Link", select:"Scelta", rating:"Voto 0-10"};
 function fmtEur(v){ return (v==null||v==="")?"—":Number(v).toLocaleString("it-IT",{style:"currency",currency:"EUR"}); }
 const PALETTE = ["#3d7bfd","#f6c454","#a78bfa","#34d399","#f87171","#22d3ee","#fb923c","#e879f9","#60a5fa","#a3e635"];
  
@@ -541,6 +664,7 @@ function shopSummaryDemo(){
 }
 function mockApi(path,opts={}){
   const m=(opts.method||"GET").toUpperCase();
+  if(path.startsWith("/lists")) return mockLists(path,m,opts);
   if(path==="/projects"&&m==="GET") return [...projects];
   if(path==="/projects"&&m==="POST"){const b=JSON.parse(opts.body);b.id=Math.max(0,...projects.map(p=>p.id))+1;
     const now=new Date().toISOString().slice(0,19).replace("T"," ");b.created_at=now;b.updated_at=now;projects.unshift(b);return b;}
@@ -586,17 +710,21 @@ async function checkConn(){
       {id:2,project_id:1,name:"Mean Well LRS-150-12",description:"Alimentatore 12V open frame",shop:"Amazon",url:null,estimated_price:19.9,quantity:1,priority:"high",status:"to_buy",created_at:"2026-05-20 10:00:00"},
       {id:3,project_id:4,name:"Sensore movimento Zigbee",description:"Aqara P1",shop:"AliExpress",url:null,estimated_price:6.5,quantity:3,priority:"medium",status:"to_buy",created_at:"2026-04-25 10:00:00"},
       {id:4,project_id:4,name:"Kit resistenze 10k",description:null,shop:"Action",url:null,estimated_price:2.0,quantity:1,priority:"low",status:"to_buy",created_at:"2026-04-25 10:05:00"},
-      {id:5,project_id:2,name:"Dominio (opzionale)",description:"Accesso via IP Tailscale, non necessario",shop:"",url:null,estimated_price:null,quantity:1,priority:"low",status:"cancelled",created_at:"2026-05-19 10:00:00"}];}
+      {id:5,project_id:2,name:"Dominio (opzionale)",description:"Accesso via IP Tailscale, non necessario",shop:"",url:null,estimated_price:null,quantity:1,priority:"low",status:"cancelled",created_at:"2026-05-19 10:00:00"}];
+    demoSeedLists();}
 }
  
 // ---------- Load ----------
 async function loadAll(){
-  try{ categories=await api("/categories"); projects=await api("/projects"); components=await api("/components"); }
+  try{ categories=await api("/categories"); projects=await api("/projects"); components=await api("/components");
+       lists=await api("/lists");
+       if(activeListId && !lists.some(l=>l.id===activeListId)) activeListId=null;
+       listItems = activeListId ? await api(`/lists/${activeListId}/items`) : []; }
   catch(e){ toast("Errore nel caricamento","err"); }
   rebuildCatMap(); renderAll();
 }
 function rebuildCatMap(){ catMap={}; categories.forEach(c=>catMap[c.key]=c); }
-function renderAll(){ renderProjects(); renderCategories(); renderComponents(); populateCatSelect(); populateProjectSelects(); refreshShopSummary(); refreshProjectComponentsPanel(); }
+function renderAll(){ renderProjects(); renderCategories(); renderComponents(); populateCatSelect(); populateProjectSelects(); refreshShopSummary(); refreshProjectComponentsPanel(); renderLists(); }
  
 // ---------- Render: categoria chip ----------
 function catChip(key){
@@ -684,6 +812,7 @@ document.querySelectorAll(".nav-item[data-view]").forEach(n=>n.addEventListener(
   $("view-projects").hidden = v!=="projects";
   $("view-categories").hidden = v!=="categories";
   $("view-components").hidden = v!=="components";
+  $("view-lists").hidden = v!=="lists";
 }));
  
 // ---------- Filtri ----------
@@ -968,10 +1097,321 @@ async function delCat(id){
 // ---------- Toast / overlay close / esc ----------
 function toast(msg,type=""){const el=document.createElement("div");el.className="toast "+type;el.textContent=msg;
   $("toasts").appendChild(el);setTimeout(()=>{el.classList.add("out");setTimeout(()=>el.remove(),250);},2800);}
-["ovP","ovC","ovK"].forEach(o=>$(o).addEventListener("click",e=>{if(e.target.id===o)$(o).classList.remove("open");}));
+["ovP","ovC","ovK","ovL","ovI"].forEach(o=>$(o).addEventListener("click",e=>{if(e.target.id===o)$(o).classList.remove("open");}));
 document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;
+  if($("ovI").classList.contains("open")){closeItem();return;}
+  if($("ovL").classList.contains("open")){closeList();return;}
   if($("ovK").classList.contains("open")){closeComponent();return;}
   closeProject();closeCat();});
+ 
+// ====================== LISTE PERSONALIZZATE ======================
+function demoSeedLists(){
+  lists=[{id:1,name:"Anime",description:"Serie viste e da vedere",item_count:2,
+    created_at:"2026-06-10 20:00:00",updated_at:"2026-07-01 21:30:00",
+    fields:[
+      {id:1,key:"titolo",label:"Titolo",type:"text",options:null,sort_order:0},
+      {id:2,key:"episodi",label:"Episodi",type:"number",options:null,sort_order:1},
+      {id:3,key:"stato",label:"Stato",type:"select",options:["Da vedere","In corso","Finito"],sort_order:2},
+      {id:4,key:"voto",label:"Voto",type:"rating",options:null,sort_order:3}]}];
+  demoItems={1:[
+    {id:1,list_id:1,data:{titolo:"Neon Genesis Evangelion",episodi:26,stato:"Finito",voto:9},created_at:"2026-06-10 20:05:00",updated_at:"2026-06-10 20:05:00"},
+    {id:2,list_id:1,data:{titolo:"Frieren",episodi:28,stato:"In corso"},created_at:"2026-07-01 21:30:00",updated_at:"2026-07-01 21:30:00"}]};
+}
+function demoNow(){return new Date().toISOString().slice(0,19).replace("T"," ");}
+function mockLists(path,m,opts){
+  const seg=path.split("/").filter(Boolean); // ["lists", id?, "items"|"fields"|..., id?]
+  const body=opts.body?JSON.parse(opts.body):{};
+  if(path==="/lists/suggest-fields"||/\/items\/suggest$/.test(path)||/\/suggest-fields$/.test(path))
+    throw new Error("Funzioni AI non disponibili in modalità demo");
+  if(path==="/lists"&&m==="GET") return lists.map(l=>({...l,item_count:(demoItems[l.id]||[]).length}));
+  if(path==="/lists"&&m==="POST"){
+    const id=Math.max(0,...lists.map(l=>l.id))+1;
+    const fields=(body.fields||[]).map((f,i)=>({id:Date.now()+i,key:slug(f.label),label:f.label,type:f.type,
+      options:f.options||null,sort_order:i}));
+    const l={id,name:body.name,description:body.description||null,fields,item_count:0,
+      created_at:demoNow(),updated_at:demoNow()};
+    lists.unshift(l);demoItems[id]=[];return l;}
+  const lid=parseInt(seg[1]||0), L=lists.find(x=>x.id===lid);
+  if(!L) throw new Error("Lista non trovata");
+  if(seg.length===2){
+    if(m==="PATCH"){Object.assign(L,body);L.updated_at=demoNow();return L;}
+    if(m==="DELETE"){lists=lists.filter(x=>x.id!==lid);delete demoItems[lid];return null;}}
+  if(seg[2]==="fields"){
+    if(m==="POST"){const f={id:Date.now(),key:slug(body.label),label:body.label,type:body.type,
+      options:body.options||null,sort_order:L.fields.length};L.fields.push(f);return f;}
+    const fid=parseInt(seg[3]),F=L.fields.find(x=>x.id===fid);
+    if(m==="PATCH"){Object.assign(F,body);return F;}
+    if(m==="DELETE"){L.fields=L.fields.filter(x=>x.id!==fid);
+      (demoItems[lid]||[]).forEach(it=>delete it.data[F.key]);return null;}}
+  if(seg[2]==="items"){
+    const arr=demoItems[lid]=demoItems[lid]||[];
+    if(m==="GET") return [...arr];
+    if(m==="POST"){const it={id:Math.max(0,...arr.map(i=>i.id))+1,list_id:lid,data:body.data||{},
+      created_at:demoNow(),updated_at:demoNow()};arr.unshift(it);return it;}
+    const iid=parseInt(seg[3]),I=arr.find(x=>x.id===iid);
+    if(m==="PATCH"){Object.assign(I.data,body.data||{});
+      Object.keys(I.data).forEach(k=>{if(I.data[k]===null||I.data[k]==="")delete I.data[k];});
+      I.updated_at=demoNow();return I;}
+    if(m==="DELETE"){demoItems[lid]=arr.filter(x=>x.id!==iid);return null;}}
+  return null;
+}
+
+// ---------- render ----------
+function activeList(){ return lists.find(l=>l.id===activeListId)||null; }
+function renderLists(){
+  $("navLists").textContent=lists.length;
+  const box=$("listCards");
+  if(!lists.length){
+    box.innerHTML=`<div class="shophint" style="margin:0">Nessuna lista. Creane una con "Nuova lista".</div>`;
+    $("listToolbar").hidden=true;$("listPanel").hidden=true;$("btnEditList").hidden=true;return;
+  }
+  box.innerHTML=lists.map(l=>`<button class="shopcard ${activeListId===l.id?'active':''}" data-list="${l.id}">
+    <div class="sc-shop"><span class="sc-dot"></span>${esc(l.name)}</div>
+    <div class="sc-meta"><span>${l.item_count} voc${l.item_count===1?'e':'i'}</span><span class="sc-tot">${l.fields.length} campi</span></div>
+  </button>`).join("");
+  const has=!!activeList();
+  $("listToolbar").hidden=!has;$("listPanel").hidden=!has;$("btnEditList").hidden=!has;
+  if(has) renderItems();
+}
+$("listCards").addEventListener("click",async e=>{
+  const card=e.target.closest(".shopcard[data-list]"); if(!card) return;
+  const id=Number(card.dataset.list);
+  activeListId=(activeListId===id)?null:id;
+  if(activeListId){
+    try{ listItems=await api(`/lists/${activeListId}/items`); }
+    catch(err){ listItems=[]; toast("Errore: "+err.message,"err"); }
+  } else listItems=[];
+  $("itemSearch").value="";
+  renderLists();
+});
+
+function fmtVal(f,v){
+  if(v===null||v===undefined||v==="") return `<span style="color:var(--txt-3)">—</span>`;
+  switch(f.type){
+    case "boolean": return v?`<span style="color:var(--green);font-weight:500">✓ Sì</span>`:`<span style="color:var(--txt-3)">✗ No</span>`;
+    case "number":  return `<span class="mono" style="color:var(--txt-2)">${Number(v).toLocaleString("it-IT")}</span>`;
+    case "rating":  return `<span class="mono">${v}<span style="color:var(--txt-3)">/10</span></span>`;
+    case "date":   {const d=new Date(v+"T00:00:00");
+      return `<span class="mono" style="font-size:12px;color:var(--txt-2)">${isNaN(d)?esc(String(v)):d.toLocaleDateString("it-IT")}</span>`;}
+    case "url":     return `<a class="ext" style="margin:0" href="${esc(v)}" target="_blank" rel="noopener" title="${esc(v)}" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3h7v7"/><path d="M10 14 21 3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg></a>`;
+    case "select":  return `<span class="valchip"><span class="d" style="width:7px;height:7px;border-radius:50%;background:currentColor"></span>${esc(String(v))}</span>`;
+    default:        return esc(String(v));
+  }
+}
+function renderItems(){
+  const L=activeList(); if(!L) return;
+  $("theadL").innerHTML=`<tr>${L.fields.map(f=>`<th>${esc(f.label)}</th>`).join("")}<th></th></tr>`;
+  const q=($("itemSearch").value||"").toLowerCase().trim();
+  let list=[...listItems];
+  if(q) list=list.filter(it=>Object.values(it.data||{}).join(" ").toLowerCase().includes(q));
+  const tb=$("tbodyL");
+  if(!L.fields.length){tb.innerHTML=`<tr><td><div class="empty"><h3>Nessun campo</h3><div>Definisci i campi con "Modifica lista".</div></div></td></tr>`;return;}
+  if(!list.length){tb.innerHTML=`<tr><td colspan="${L.fields.length+1}"><div class="empty">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>
+    <h3>${listItems.length?"Nessun risultato":"Lista vuota"}</h3>
+    <div>${listItems.length?"Prova a cambiare la ricerca.":"Aggiungi la prima voce con \u201cNuova voce\u201d."}</div></div></td></tr>`;return;}
+  tb.innerHTML=list.map((it,i)=>`<tr data-id="${it.id}" style="animation-delay:${i*18}ms">`+
+    L.fields.map((f,j)=>j===0
+      ?`<td class="name"><span class="id">#${it.id}</span>${fmtVal(f,it.data[f.key])}</td>`
+      :`<td>${fmtVal(f,it.data[f.key])}</td>`).join("")+
+    `<td class="actions"><span class="row-actions">
+      <button class="btn sm ghost" onclick='openItem(${it.id})' title="Modifica"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>
+      <button class="btn sm ghost danger" onclick='delItem(${it.id})' title="Elimina"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+    </span></td></tr>`).join("");
+}
+$("tbodyL").addEventListener("dblclick",e=>{
+  if(e.target.closest(".row-actions")||e.target.closest("a")) return;
+  const tr=e.target.closest("tr[data-id]"); if(!tr) return;
+  openItem(Number(tr.dataset.id));
+});
+
+// ---------- modale lista ----------
+function typeOptions(sel){return Object.entries(FT_LABEL).map(([k,v])=>`<option value="${k}" ${k===sel?"selected":""}>${v}</option>`).join("");}
+function paintFieldRows(){
+  const box=$("l-fields");
+  const rows=draftFields.filter(f=>!f._del);
+  $("l-fields-empty").hidden=!!rows.length;
+  box.innerHTML=rows.map(f=>{const i=draftFields.indexOf(f);
+    return `<div class="frow" data-i="${i}">
+      <input class="f-label" placeholder="Nome campo" value="${esc(f.label)}" oninput="draftFields[${i}].label=this.value">
+      <select class="f-type" onchange="draftFields[${i}].type=this.value;paintFieldRows()">${typeOptions(f.type)}</select>
+      <input class="f-opts" ${f.type!=="select"?"data-off":""} placeholder="Opzioni separate da virgola"
+        value="${esc((f.options||[]).join(", "))}" oninput="draftFields[${i}]._opts=this.value">
+      <button class="btn sm ghost danger" title="Rimuovi campo" onclick="removeFieldRow(${i})"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+    </div>`;}).join("");
+}
+function addFieldRow(preset){
+  draftFields.push(Object.assign({id:null,key:null,label:"",type:"text",options:null,_opts:""},preset||{}));
+  paintFieldRows();
+  if(!preset){const inputs=$("l-fields").querySelectorAll(".f-label");inputs[inputs.length-1]?.focus();}
+}
+function removeFieldRow(i){
+  const f=draftFields[i];
+  if(f.id){
+    if(!confirm(`Rimuovere il campo \u201c${f.label}\u201d? I valori già inseriti nelle voci verranno eliminati.`)) return;
+    f._del=true; draftDeleted.push(f.id);
+  } else draftFields.splice(i,1);
+  paintFieldRows();
+}
+function openList(id){
+  draftFields=[];draftDeleted=[];
+  if(id){const L=lists.find(x=>x.id===id);$("lTitle").textContent="Modifica lista";
+    $("l-id").value=L.id;$("l-name").value=L.name;$("l-desc").value=L.description||"";
+    draftFields=L.fields.map(f=>({id:f.id,key:f.key,label:f.label,type:f.type,
+      options:f.options?[...f.options]:null,_opts:(f.options||[]).join(", "),
+      _orig:{label:f.label,type:f.type,opts:(f.options||[]).join(", ")}}));
+    $("lDelete").hidden=false;
+  }else{$("lTitle").textContent="Nuova lista";
+    $("l-id").value="";$("l-name").value="";$("l-desc").value="";
+    $("lDelete").hidden=true;}
+  paintFieldRows();
+  $("ovL").classList.add("open");setTimeout(()=>$("l-name").focus(),120);
+}
+function closeList(){$("ovL").classList.remove("open");}
+function parseOpts(s){return (s||"").split(",").map(x=>x.trim()).filter(Boolean);}
+function collectFields(){
+  const out=[];
+  for(const f of draftFields){
+    if(f._del) continue;
+    const label=(f.label||"").trim();
+    if(!label){ if(f.id) throw new Error("Un campo esistente ha il nome vuoto"); continue; }
+    const options=f.type==="select"?parseOpts(f._opts):null;
+    if(f.type==="select"&&!options.length) throw new Error(`Il campo scelta \u201c${label}\u201d richiede almeno un'opzione`);
+    out.push({id:f.id,label,type:f.type,options,_orig:f._orig});
+  }
+  return out;
+}
+async function saveList(){
+  const name=$("l-name").value.trim();
+  if(!name){toast("Il nome è obbligatorio","err");$("l-name").focus();return;}
+  let flds;
+  try{ flds=collectFields(); }catch(e){ toast(e.message,"err"); return; }
+  const id=$("l-id").value,btn=$("lSave");btn.disabled=true;
+  const desc=$("l-desc").value.trim()||null;
+  try{
+    if(!id){
+      const L=await api("/lists",{method:"POST",body:JSON.stringify({name,description:desc,
+        fields:flds.map(f=>({label:f.label,type:f.type,options:f.options}))})});
+      activeListId=L.id; listItems=[];
+    }else{
+      const lid=Number(id);
+      await api(`/lists/${lid}`,{method:"PATCH",body:JSON.stringify({name,description:desc})});
+      for(const fid of draftDeleted) await api(`/lists/${lid}/fields/${fid}`,{method:"DELETE"});
+      for(const f of flds){
+        if(!f.id) await api(`/lists/${lid}/fields`,{method:"POST",body:JSON.stringify({label:f.label,type:f.type,options:f.options})});
+        else if(f._orig&&(f._orig.label!==f.label||f._orig.type!==f.type||f._orig.opts!==(f.options||[]).join(", ")))
+          await api(`/lists/${lid}/fields/${f.id}`,{method:"PATCH",body:JSON.stringify({label:f.label,type:f.type,options:f.options})});
+      }
+      listItems=await api(`/lists/${lid}/items`);
+    }
+    await loadAll();closeList();toast(id?"Lista aggiornata":"Lista creata","ok");
+  }catch(e){toast("Errore: "+e.message,"err");}finally{btn.disabled=false;}
+}
+async function delList(){
+  const id=Number($("l-id").value); const L=lists.find(x=>x.id===id); if(!L) return;
+  if(!confirm(`Eliminare la lista \u201c${L.name}\u201d e tutte le sue ${L.item_count} voci?`)) return;
+  try{ await api(`/lists/${id}`,{method:"DELETE"});
+    if(activeListId===id){activeListId=null;listItems=[];}
+    await loadAll();closeList();toast("Lista eliminata","ok");
+  }catch(e){toast("Errore: "+e.message,"err");}
+}
+async function suggestFields(){
+  const name=$("l-name").value.trim();
+  if(!name){toast("Scrivi prima il nome della lista: serve all'AI","err");$("l-name").focus();return;}
+  const btn=$("lSuggest");btn.disabled=true;const old=btn.innerHTML;
+  btn.innerHTML=`<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.2-8.5"/></svg> Chiedo a Claude…`;
+  try{
+    const existing=draftFields.filter(f=>!f._del&&(f.label||"").trim()).map(f=>f.label.trim());
+    const r=await api("/lists/suggest-fields",{method:"POST",
+      body:JSON.stringify({name,description:$("l-desc").value.trim()||null,existing})});
+    (r.fields||[]).forEach(f=>addFieldRow({label:f.label,type:f.type,
+      options:f.options||null,_opts:(f.options||[]).join(", ")}));
+    toast(`${r.fields.length} campi proposti — modificali o rimuovili prima di salvare`,"ok");
+  }catch(e){toast(e.message,"err");}
+  finally{btn.disabled=false;btn.innerHTML=old;}
+}
+
+// ---------- modale voce ----------
+function itemInput(f,v){
+  const val=v===null||v===undefined?"":v;
+  switch(f.type){
+    case "number": return `<input data-key="${f.key}" type="number" step="any" value="${esc(String(val))}">`;
+    case "rating": return `<input data-key="${f.key}" type="number" min="0" max="10" step="1" value="${esc(String(val))}" placeholder="0-10">`;
+    case "date":   return `<input data-key="${f.key}" type="date" value="${esc(String(val))}">`;
+    case "boolean":return `<select data-key="${f.key}"><option value="">—</option><option value="true" ${val===true?"selected":""}>Sì</option><option value="false" ${val===false?"selected":""}>No</option></select>`;
+    case "select": return `<select data-key="${f.key}"><option value="">—</option>${(f.options||[]).map(o=>`<option ${String(val)===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
+    case "url":    return `<input data-key="${f.key}" placeholder="https://…" value="${esc(String(val))}" autocomplete="off">`;
+    default:       return `<input data-key="${f.key}" value="${esc(String(val))}" autocomplete="off">`;
+  }
+}
+function openItem(id){
+  const L=activeList(); if(!L) return;
+  if(!L.fields.length){toast("La lista non ha campi: definiscili con \u201cModifica lista\u201d","err");return;}
+  const it=id?listItems.find(x=>x.id===id):null;
+  $("iTitle").textContent=it?"Modifica voce":"Nuova voce";
+  $("i-id").value=it?it.id:"";
+  $("iAiHint").textContent=`L'AI compila i campi vuoti usando \u201c${L.fields[0].label}\u201d come riferimento.`;
+  $("i-body").innerHTML=L.fields.map(f=>`<div class="field"><label>${esc(f.label)}${f.type==="rating"?" (0-10)":""}</label>${itemInput(f,it?it.data[f.key]:null)}</div>`).join("");
+  $("ovI").classList.add("open");
+  setTimeout(()=>$("i-body").querySelector("input,select")?.focus(),120);
+}
+function closeItem(){$("ovI").classList.remove("open");}
+function collectItemData(){
+  const L=activeList(),data={};
+  L.fields.forEach(f=>{
+    const el=$("i-body").querySelector(`[data-key="${f.key}"]`); if(!el) return;
+    let v=el.value;
+    if(v===""){data[f.key]=null;return;}
+    if(f.type==="number") v=parseFloat(v);
+    else if(f.type==="rating") v=parseInt(v,10);
+    else if(f.type==="boolean") v=(v==="true");
+    data[f.key]=v;
+  });
+  return data;
+}
+async function saveItem(){
+  const L=activeList(); if(!L) return;
+  const data=collectItemData();
+  if(Object.values(data).every(v=>v===null)){toast("Compila almeno un campo","err");return;}
+  const id=$("i-id").value,btn=$("iSave");btn.disabled=true;
+  try{
+    if(id) await api(`/lists/${L.id}/items/${id}`,{method:"PATCH",body:JSON.stringify({data})});
+    else   await api(`/lists/${L.id}/items`,{method:"POST",body:JSON.stringify({data})});
+    listItems=await api(`/lists/${L.id}/items`);
+    lists=await api("/lists");
+    renderLists();closeItem();toast(id?"Voce aggiornata":"Voce creata","ok");
+  }catch(e){toast("Errore: "+e.message,"err");}finally{btn.disabled=false;}
+}
+async function delItem(id){
+  const L=activeList(); if(!L) return;
+  if(!confirm("Eliminare questa voce?")) return;
+  try{ await api(`/lists/${L.id}/items/${id}`,{method:"DELETE"});
+    listItems=await api(`/lists/${L.id}/items`); lists=await api("/lists");
+    renderLists();toast("Voce eliminata","ok");
+  }catch(e){toast("Errore: "+e.message,"err");}
+}
+async function suggestItem(){
+  const L=activeList(); if(!L) return;
+  const first=L.fields[0];
+  const el=$("i-body").querySelector(`[data-key="${first.key}"]`);
+  const hint=(el?.value||"").trim();
+  if(!hint){toast(`Compila prima \u201c${first.label}\u201d: serve all'AI come riferimento`,"err");el?.focus();return;}
+  const btn=$("iSuggest");btn.disabled=true;const old=btn.innerHTML;
+  btn.innerHTML=`<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.2-8.5"/></svg> Chiedo a Claude…`;
+  try{
+    const r=await api(`/lists/${L.id}/items/suggest`,{method:"POST",body:JSON.stringify({hint})});
+    let filled=0;
+    Object.entries(r.data||{}).forEach(([k,v])=>{
+      const inp=$("i-body").querySelector(`[data-key="${k}"]`);
+      if(!inp||v===null||v===undefined) return;
+      if(inp.value!==""&&inp.value!==null) return;      // non sovrascrive l'input dell'utente
+      inp.value=(typeof v==="boolean")?String(v):v; filled++;
+    });
+    toast(filled?`${filled} campi proposti dall'AI — verifica i valori prima di salvare`:"L'AI non ha trovato valori affidabili","ok");
+  }catch(e){toast(e.message,"err");}
+  finally{btn.disabled=false;btn.innerHTML=old;}
+}
+// ====================== /LISTE ======================
  
 // ---------- Boot ----------
 (async()=>{ await checkConn(); if(!DEMO){ await loadAll(); } else { rebuildCatMap(); renderAll(); } })();
