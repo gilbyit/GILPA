@@ -11,7 +11,7 @@ cosa che esce verso internet sono le (future) chiamate all'API di Claude.
  
 ## Stato attuale
  
-> Versione backend: **0.3.0**
+> Versione backend: **0.6.0**
  
 Funzionante e in uso:
  
@@ -139,6 +139,25 @@ Tutti gli endpoint applicativi sono sotto `/api`. `/health` sta sulla root.
 | POST | `/api/categories` | Crea categoria (chiave generata dal nome) |
 | PATCH | `/api/categories/{id}` | Modifica nome/colore |
 | DELETE | `/api/categories/{id}` | Elimina (bloccato se in uso) |
+| GET | `/api/components` | Lista componenti (filtri: `status`, `shop`, `project_id`) |
+| POST | `/api/components` | Crea componente |
+| PATCH | `/api/components/{id}` | Modifica componente |
+| DELETE | `/api/components/{id}` | Elimina componente |
+| GET | `/api/shopping-list/summary` | Riepilogo lista spesa per negozio |
+| GET | `/api/lists` | Liste personalizzate con campi e conteggio voci |
+| POST | `/api/lists` | Crea lista (campi opzionali in body) |
+| PATCH | `/api/lists/{id}` | Modifica nome/descrizione |
+| DELETE | `/api/lists/{id}` | Elimina lista e voci |
+| POST | `/api/lists/{id}/fields` | Aggiunge un campo (in coda) |
+| PATCH | `/api/lists/{id}/fields/{fid}` | Modifica etichetta/tipo/opzioni |
+| DELETE | `/api/lists/{id}/fields/{fid}` | Elimina campo e ripulisce le voci |
+| PUT | `/api/lists/{id}/fields/reorder` | Riordina i campi (`{"order": [id, ...]}`, atomico) |
+| GET | `/api/lists/{id}/items` | Voci della lista |
+| POST | `/api/lists/{id}/items` | Crea voce |
+| PATCH | `/api/lists/{id}/items/{iid}` | Modifica voce |
+| DELETE | `/api/lists/{id}/items/{iid}` | Elimina voce |
+| POST | `/api/lists/suggest-fields` | Proposta campi via LLM |
+| POST | `/api/lists/{id}/items/suggest` | Autofill voce via LLM |
  
 ---
  
@@ -146,8 +165,10 @@ Tutti gli endpoint applicativi sono sotto `/api`. `/health` sta sulla root.
  
 - [x] CRUD progetti
 - [x] Categorie dinamiche con conteggio + creazione al volo
-- [ ] **Componenti** agganciati ai progetti (negozio, prezzo, quantità, stato d'acquisto)
-- [ ] **Lista spesa** raggruppata per negozio con totali
+- [x] **Componenti** agganciati ai progetti (negozio, prezzo, quantità, stato d'acquisto)
+- [x] **Lista spesa** raggruppata per negozio con totali
+- [x] **Liste personalizzate** con campi definiti dall'utente + suggerimenti LLM
+- [x] **Riordino campi** (drag & drop) e **filtri** sulle voci delle liste
 - [ ] **Pomodoro** timer + log attività
 - [ ] **Chat / cervello LLM** — endpoint `/api/chat` con Claude API ("vado da Action" → lista materiali)
 - [ ] **Accesso remoto** via Tailscale

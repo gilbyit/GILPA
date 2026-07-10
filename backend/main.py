@@ -1,12 +1,13 @@
 """GILPA Backend — FastAPI
  
-v0.5.0
+v0.6.0
 - CRUD progetti
 - CRUD categorie DINAMICHE (tabella `categories`), con conteggio progetti
 - CRUD componenti + lista spesa per negozio
 - LISTE PERSONALIZZATE: liste con campi definiti dall'utente (testo, numero,
   booleano, data, url, select, rating) e voci con dati JSON.
   Suggerimento campi e autofill voci via Claude API (richiede ANTHROPIC_API_KEY).
+- Riordino atomico dei campi di una lista: PUT /api/lists/{id}/fields/reorder
 - Le altre tabelle dello schema vengono comunque create all'avvio.
 """
  
@@ -22,7 +23,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
  
-app = FastAPI(title="GILPA", version="0.5.0")
+app = FastAPI(title="GILPA", version="0.6.0")
  
 app.add_middleware(
     CORSMiddleware,
@@ -576,6 +577,10 @@ class FieldUpdate(BaseModel):
     sort_order: Optional[int] = None
  
  
+class FieldsReorder(BaseModel):
+    order: list[int] = Field(..., min_length=1)
+
+
 class ListCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     description: Optional[str] = None
@@ -865,6 +870,37 @@ def delete_field(list_id: int, field_id: int):
     return None
  
  
+@app.put("/api/lists/{list_id}/fields/reorder")
+def reorder_fields(list_id: int, body: FieldsReorder):
+    """Riordina i campi di una lista. `order` deve contenere ESATTAMENTE tutti
+    gli id dei campi della lista, una volta ciascuno, nell'ordine desiderato."""
+    conn = get_db()
+    try:
+        if not _list_exists(conn, list_id):
+            raise HTTPException(404, "Lista non trovata")
+        current = [
+            r["id"] for r in conn.execute(
+                "SELECT id FROM list_fields WHERE list_id = ?", (list_id,)
+            ).fetchall()
+        ]
+        if sorted(body.order) != sorted(current):
+            raise HTTPException(
+                422,
+                "L'ordine deve contenere tutti e soli gli id dei campi della lista, senza duplicati",
+            )
+        # Nessuna scrittura prima della validazione: niente transazioni aperte su 422.
+        for i, fid in enumerate(body.order):
+            conn.execute(
+                "UPDATE list_fields SET sort_order = ? WHERE id = ? AND list_id = ?",
+                (i, fid, list_id),
+            )
+        _touch_list(conn, list_id)
+        conn.commit()
+        return _load_fields(conn, list_id)
+    finally:
+        conn.close()
+ 
+ 
 # ---- Voci ----
  
 @app.get("/api/lists/{list_id}/items")
@@ -1058,3 +1094,4 @@ def suggest_item(list_id: int, body: SuggestItemIn):
     data = _validate_item_data(fields, raw, strict=False)
     data = {k: v for k, v in data.items() if v is not None}
     return {"data": data, "model": LLM_MODEL}
+    

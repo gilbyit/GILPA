@@ -219,11 +219,54 @@
  
   /* liste personalizzate */
   .fields-ed{display:flex;flex-direction:column;gap:8px}
-  .frow{display:grid;grid-template-columns:minmax(0,1fr) 132px minmax(0,1fr) 34px;gap:8px;align-items:center}
+  .frow{display:grid;grid-template-columns:24px minmax(0,1fr) 128px minmax(0,1fr) 24px 34px;gap:8px;align-items:center}
   .frow input,.frow select{width:100%;background:var(--bg-2);border:1px solid var(--line-2);border-radius:8px;
     padding:9px 11px;color:var(--txt);font-family:inherit;font-size:13px;outline:none;transition:.12s}
   .frow input:focus,.frow select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-sf)}
   .frow .f-opts[data-off]{visibility:hidden}
+
+  /* riordino campi */
+  .fdrag{display:grid;place-items:center;height:34px;color:var(--txt-3);cursor:grab;border-radius:6px;transition:.12s}
+  .fdrag:hover{color:var(--txt-2);background:var(--panel-2)}
+  .fdrag:active{cursor:grabbing}
+  .fdrag svg{width:14px;height:14px;pointer-events:none}
+  .frow.dragging{opacity:.4}
+  .frow.over-top{box-shadow:0 -2px 0 0 var(--accent)}
+  .frow.over-bot{box-shadow:0 2px 0 0 var(--accent)}
+  .fmove{display:flex;flex-direction:column;gap:2px}
+  .fmove button{width:24px;height:16px;display:grid;place-items:center;background:var(--panel-2);
+    border:1px solid var(--line-2);color:var(--txt-3);border-radius:4px;cursor:pointer;padding:0;transition:.12s}
+  .fmove button:hover:not(:disabled){color:var(--txt);border-color:var(--accent)}
+  .fmove button:disabled{opacity:.28;cursor:default}
+  .fmove svg{width:10px;height:10px}
+
+  /* filtri voci lista */
+  .lfilters{display:flex;gap:6px;flex-wrap:wrap}
+  .fbtn{display:inline-flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);
+    border-radius:8px;padding:7px 10px;color:var(--txt-2);font-family:inherit;font-size:12.5px;cursor:pointer;transition:.12s}
+  .fbtn:hover{border-color:var(--line-2);color:var(--txt)}
+  .fbtn.on{border-color:var(--accent);background:var(--accent-sf);color:#cfe0ff}
+  .fbtn .fbv{color:var(--txt);font-weight:500;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fbtn.on .fbv{color:#dce6ff}
+  .fbtn svg{width:11px;height:11px;opacity:.55;flex:none}
+  .fcount{font-size:12px;color:var(--txt-3);font-family:'IBM Plex Mono'}
+
+  .pop{position:fixed;z-index:60;background:var(--panel-2);border:1px solid var(--line-2);border-radius:10px;
+    box-shadow:var(--shadow);padding:6px;min-width:196px;max-width:280px;max-height:340px;overflow:auto}
+  .pop .ph{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--txt-3);padding:6px 8px 4px}
+  .pop label{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--txt-2)}
+  .pop label:hover{background:var(--panel);color:var(--txt)}
+  .pop input[type=checkbox],.pop input[type=radio]{accent-color:var(--accent);width:14px;height:14px;flex:none}
+  .pop .prow{display:flex;gap:6px;padding:4px 8px 8px;align-items:center}
+  .pop .prow span{font-size:12px;color:var(--txt-3)}
+  .pop .prow input,.pop .prow select{width:100%;background:var(--bg-2);border:1px solid var(--line-2);border-radius:7px;
+    padding:7px 8px;color:var(--txt);font-family:'IBM Plex Mono';font-size:12.5px;outline:none}
+  .pop .prow input:focus,.pop .prow select:focus{border-color:var(--accent)}
+  .pop .pacts{display:flex;gap:6px;padding:6px 4px 2px;border-top:1px solid var(--line);margin-top:6px}
+  .pop .pacts button{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--txt-2);border-radius:6px;
+    padding:5px;font-family:inherit;font-size:12px;cursor:pointer;transition:.12s}
+  .pop .pacts button:hover{color:var(--txt);border-color:var(--line-2)}
+  .pop .pempty{padding:10px 8px;font-size:12.5px;color:var(--txt-3)}
   .btn.ai{color:var(--violet)}
   .btn.ai:hover{border-color:var(--violet)}
   .btn.ai svg{width:14px;height:14px}
@@ -397,11 +440,17 @@
       <div class="shopgrid" id="listCards"></div>
 
       <div class="toolbar" id="listToolbar" hidden>
-        <div class="search">
+        <div class="search" id="searchWrap">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-          <input id="itemSearch" placeholder="Cerca nella lista…" oninput="renderItems()">
+          <input id="itemSearch" placeholder="Cerca nei campi testo…" oninput="onItemSearch()">
         </div>
+        <div class="lfilters" id="listFilters"></div>
+        <button class="btn sm ghost" id="btnClearFilters" onclick="clearItemFilters()" hidden title="Azzera ricerca e filtri">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          Azzera
+        </button>
         <div class="spacer"></div>
+        <span class="fcount" id="itemCount"></span>
         <button class="btn primary" onclick="openItem()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
           Nuova voce
@@ -588,6 +637,9 @@
   </div>
 </div>
 
+<!-- Popover filtri -->
+<div class="pop" id="pop" hidden></div>
+
 <div class="toasts" id="toasts"></div>
  
 <script>
@@ -615,6 +667,12 @@ let listItems = [];           // voci della lista aperta
 let draftFields = [];         // editor campi nel modale lista
 let draftDeleted = [];        // id campi esistenti rimossi (da confermare al salvataggio)
 let demoItems = {};           // demo: voci per lista
+let itemFilters = {};         // filtri attivi sulle voci, per chiave campo
+let popKey = null;            // campo del popover filtro aperto
+let dragFrom = null;          // indice riga campo trascinata (editor lista)
+
+// Oltre questa soglia un campo numerico passa da "valori presenti" a intervallo min/max
+const NUM_PICK_MAX = 25;
  
 const ST_LABEL = {new:"Nuovo",active:"Attivo", paused:"In pausa", done:"Completato"};
 const PR_LABEL = {high:"Alta", medium:"Media", low:"Bassa"};
@@ -1099,6 +1157,7 @@ function toast(msg,type=""){const el=document.createElement("div");el.className=
   $("toasts").appendChild(el);setTimeout(()=>{el.classList.add("out");setTimeout(()=>el.remove(),250);},2800);}
 ["ovP","ovC","ovK","ovL","ovI"].forEach(o=>$(o).addEventListener("click",e=>{if(e.target.id===o)$(o).classList.remove("open");}));
 document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;
+  if(popKey){closePop();return;}
   if($("ovI").classList.contains("open")){closeItem();return;}
   if($("ovL").classList.contains("open")){closeList();return;}
   if($("ovK").classList.contains("open")){closeComponent();return;}
@@ -1106,16 +1165,19 @@ document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;
  
 // ====================== LISTE PERSONALIZZATE ======================
 function demoSeedLists(){
-  lists=[{id:1,name:"Anime",description:"Serie viste e da vedere",item_count:2,
+  lists=[{id:1,name:"Anime",description:"Serie viste e da vedere",item_count:3,
     created_at:"2026-06-10 20:00:00",updated_at:"2026-07-01 21:30:00",
     fields:[
       {id:1,key:"titolo",label:"Titolo",type:"text",options:null,sort_order:0},
-      {id:2,key:"episodi",label:"Episodi",type:"number",options:null,sort_order:1},
-      {id:3,key:"stato",label:"Stato",type:"select",options:["Da vedere","In corso","Finito"],sort_order:2},
-      {id:4,key:"voto",label:"Voto",type:"rating",options:null,sort_order:3}]}];
+      {id:2,key:"anno",label:"Anno",type:"number",options:null,sort_order:1},
+      {id:3,key:"episodi",label:"Episodi",type:"number",options:null,sort_order:2},
+      {id:4,key:"stato",label:"Stato",type:"select",options:["Da vedere","In corso","Finito"],sort_order:3},
+      {id:5,key:"voto",label:"Voto",type:"rating",options:null,sort_order:4},
+      {id:6,key:"preferito",label:"Preferito",type:"boolean",options:null,sort_order:5}]}];
   demoItems={1:[
-    {id:1,list_id:1,data:{titolo:"Neon Genesis Evangelion",episodi:26,stato:"Finito",voto:9},created_at:"2026-06-10 20:05:00",updated_at:"2026-06-10 20:05:00"},
-    {id:2,list_id:1,data:{titolo:"Frieren",episodi:28,stato:"In corso"},created_at:"2026-07-01 21:30:00",updated_at:"2026-07-01 21:30:00"}]};
+    {id:1,list_id:1,data:{titolo:"Neon Genesis Evangelion",anno:1995,episodi:26,stato:"Finito",voto:9,preferito:true},created_at:"2026-06-10 20:05:00",updated_at:"2026-06-10 20:05:00"},
+    {id:2,list_id:1,data:{titolo:"Frieren",anno:2023,episodi:28,stato:"In corso"},created_at:"2026-07-01 21:30:00",updated_at:"2026-07-01 21:30:00"},
+    {id:3,list_id:1,data:{titolo:"Cowboy Bebop",anno:1998,episodi:26,stato:"Finito",voto:10,preferito:false},created_at:"2026-06-11 09:00:00",updated_at:"2026-06-11 09:00:00"}]};
 }
 function demoNow(){return new Date().toISOString().slice(0,19).replace("T"," ");}
 function mockLists(path,m,opts){
@@ -1137,7 +1199,14 @@ function mockLists(path,m,opts){
     if(m==="PATCH"){Object.assign(L,body);L.updated_at=demoNow();return L;}
     if(m==="DELETE"){lists=lists.filter(x=>x.id!==lid);delete demoItems[lid];return null;}}
   if(seg[2]==="fields"){
-    if(m==="POST"){const f={id:Date.now(),key:slug(body.label),label:body.label,type:body.type,
+    if(seg[3]==="reorder"&&m==="PUT"){
+      const ids=body.order||[];
+      const cur=L.fields.map(x=>x.id);
+      if([...ids].sort().join()!==[...cur].sort().join())
+        throw new Error("L'ordine deve contenere tutti e soli gli id dei campi della lista, senza duplicati");
+      L.fields=ids.map((id,i)=>{const f=L.fields.find(x=>x.id===id);f.sort_order=i;return f;});
+      L.updated_at=demoNow();return L.fields;}
+    if(m==="POST"){const f={id:Date.now()+Math.floor(Math.random()*1000),key:slug(body.label),label:body.label,type:body.type,
       options:body.options||null,sort_order:L.fields.length};L.fields.push(f);return f;}
     const fid=parseInt(seg[3]),F=L.fields.find(x=>x.id===fid);
     if(m==="PATCH"){Object.assign(F,body);return F;}
@@ -1171,7 +1240,7 @@ function renderLists(){
   </button>`).join("");
   const has=!!activeList();
   $("listToolbar").hidden=!has;$("listPanel").hidden=!has;$("btnEditList").hidden=!has;
-  if(has) renderItems();
+  if(has){ renderFilterBar(); renderItems(); }
 }
 $("listCards").addEventListener("click",async e=>{
   const card=e.target.closest(".shopcard[data-list]"); if(!card) return;
@@ -1181,6 +1250,8 @@ $("listCards").addEventListener("click",async e=>{
     try{ listItems=await api(`/lists/${activeListId}/items`); }
     catch(err){ listItems=[]; toast("Errore: "+err.message,"err"); }
   } else listItems=[];
+  closePop();
+  itemFilters={};
   $("itemSearch").value="";
   renderLists();
 });
@@ -1198,12 +1269,203 @@ function fmtVal(f,v){
     default:        return esc(String(v));
   }
 }
+// ---------- filtri voci ----------
+const FILTERABLE={boolean:1,rating:1,select:1,number:1};
+const IC_CHEV=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>`;
+
+function fieldByKey(k){ return (activeList()?.fields||[]).find(x=>x.key===k); }
+function textFields(L){ return L.fields.filter(f=>f.type==="text"||f.type==="url"); }
+function searchQ(){ return ($("itemSearch").value||"").toLowerCase().trim(); }
+
+// Valori numerici distinti effettivamente presenti nelle voci (es. anni)
+function distinctNums(key){
+  const s=new Set();
+  listItems.forEach(it=>{const v=it.data?.[key]; if(v!==null&&v!==undefined&&v!=="") s.add(Number(v));});
+  return [...s].filter(n=>!isNaN(n)).sort((a,b)=>a-b);
+}
+function numPickMode(key){ return distinctNums(key).length<=NUM_PICK_MAX; }
+
+function fState(f){
+  let s=itemFilters[f.key];
+  if(!s){
+    if(f.type==="boolean")     s={v:"all"};
+    else if(f.type==="rating") s={min:null,max:null};
+    else if(f.type==="select") s={vals:[]};
+    else if(f.type==="number") s={vals:[],min:null,max:null};
+    else s={};
+    itemFilters[f.key]=s;
+  }
+  return s;
+}
+function fActive(f){
+  const s=fState(f);
+  switch(f.type){
+    case "boolean": return s.v!=="all";
+    case "rating":  return s.min!=null||s.max!=null;
+    case "select":  return s.vals.length>0;
+    case "number":  return s.vals.length>0||s.min!=null||s.max!=null;
+    default:        return false;
+  }
+}
+function fSummary(f){
+  const s=fState(f);
+  switch(f.type){
+    case "boolean": return s.v==="all"?"Tutti":(s.v==="true"?"Sì":"No");
+    case "rating":  return (s.min==null&&s.max==null)?"Tutti":`${s.min??0}–${s.max??10}`;
+    case "select":  return s.vals.length?(s.vals.length===1?s.vals[0]:`${s.vals.length} scelte`):"Tutte";
+    case "number":
+      if(s.vals.length) return s.vals.length===1?String(s.vals[0]):`${s.vals.length} valori`;
+      if(s.min!=null||s.max!=null) return `${s.min??"−∞"}–${s.max??"+∞"}`;
+      return "Tutti";
+    default: return "";
+  }
+}
+function filtersActive(){
+  const L=activeList(); if(!L) return false;
+  return !!searchQ()||L.fields.some(f=>FILTERABLE[f.type]&&fActive(f));
+}
+function itemMatches(L,it){
+  const d=it.data||{};
+  const q=searchQ();
+  if(q){
+    const hay=textFields(L).map(f=>d[f.key]??"").join(" ").toLowerCase();
+    if(!hay.includes(q)) return false;
+  }
+  for(const f of L.fields){
+    if(!FILTERABLE[f.type]||!fActive(f)) continue;
+    const s=itemFilters[f.key], v=d[f.key];
+    if(f.type==="boolean"){
+      if(v!==(s.v==="true")) return false;                 // null/undefined = non impostato → escluso
+    }else if(f.type==="rating"){
+      if(v==null) return false;
+      if(s.min!=null&&v<s.min) return false;
+      if(s.max!=null&&v>s.max) return false;
+    }else if(f.type==="select"){
+      if(!s.vals.includes(v)) return false;
+    }else if(f.type==="number"){
+      if(v==null||v==="") return false;
+      const n=Number(v);
+      if(s.vals.length&&!s.vals.includes(n)) return false;
+      if(s.min!=null&&n<s.min) return false;
+      if(s.max!=null&&n>s.max) return false;
+    }
+  }
+  return true;
+}
+function renderFilterBar(){
+  const L=activeList(); if(!L) return;
+  $("searchWrap").hidden=!textFields(L).length;
+  $("listFilters").innerHTML=L.fields.filter(f=>FILTERABLE[f.type]).map(f=>
+    `<button class="fbtn ${fActive(f)?"on":""}" data-k="${f.key}" onclick="openFilterPop(event,'${f.key}')">
+      ${esc(f.label)} <span class="fbv">${esc(fSummary(f))}</span> ${IC_CHEV}
+    </button>`).join("");
+  $("btnClearFilters").hidden=!filtersActive();
+}
+function syncFilterBtn(key){
+  const f=fieldByKey(key); if(!f) return;
+  const btn=$("listFilters").querySelector(`.fbtn[data-k="${key}"]`);
+  if(btn){ btn.classList.toggle("on",fActive(f)); btn.querySelector(".fbv").textContent=fSummary(f); }
+  $("btnClearFilters").hidden=!filtersActive();
+}
+function onItemSearch(){ $("btnClearFilters").hidden=!filtersActive(); renderItems(); }
+function clearItemFilters(){
+  closePop();
+  itemFilters={};
+  $("itemSearch").value="";
+  renderFilterBar(); renderItems();
+}
+
+// ---------- popover filtro ----------
+function closePop(){ popKey=null; $("pop").hidden=true; $("pop").innerHTML=""; }
+function openFilterPop(ev,key){
+  ev.stopPropagation();
+  if(popKey===key){ closePop(); return; }
+  popKey=key;
+  const p=$("pop");
+  p.hidden=false;
+  paintPop();
+  const r=ev.currentTarget.getBoundingClientRect();
+  const left=Math.max(8,Math.min(r.left,window.innerWidth-p.offsetWidth-12));
+  const top=(r.bottom+6+p.offsetHeight>window.innerHeight-8)
+    ? Math.max(8,r.top-6-p.offsetHeight) : r.bottom+6;
+  p.style.left=left+"px"; p.style.top=top+"px";
+}
+function paintPop(){
+  const f=fieldByKey(popKey); if(!f){ closePop(); return; }
+  const s=fState(f), p=$("pop");
+  if(f.type==="boolean"){
+    p.innerHTML=`<div class="ph">${esc(f.label)}</div>`+
+      [["all","Tutti"],["true","Sì"],["false","No"]].map(([v,lab])=>
+        `<label><input type="radio" name="pb" value="${v}" ${s.v===v?"checked":""} onchange="setBool('${f.key}','${v}')">${lab}</label>`).join("");
+  }else if(f.type==="rating"){
+    const opt=(sel)=>Array.from({length:11},(_,n)=>`<option value="${n}" ${sel===n?"selected":""}>${n}</option>`).join("");
+    p.innerHTML=`<div class="ph">${esc(f.label)} — intervallo</div>
+      <div class="prow"><span>da</span><select onchange="setRating('${f.key}','min',this.value)">
+        <option value="">—</option>${opt(s.min)}</select>
+        <span>a</span><select onchange="setRating('${f.key}','max',this.value)">
+        <option value="">—</option>${opt(s.max)}</select></div>
+      <div class="pacts"><button type="button" onclick="resetField('${f.key}')">Azzera</button></div>`;
+  }else if(f.type==="select"){
+    const opts=f.options||[];
+    p.innerHTML=`<div class="ph">${esc(f.label)}</div>`+
+      (opts.length?opts.map((o,i)=>
+        `<label><input type="checkbox" ${s.vals.includes(o)?"checked":""} onchange="toggleSel('${f.key}',${i})">${esc(o)}</label>`).join("")
+        :`<div class="pempty">Nessuna opzione definita.</div>`)+
+      `<div class="pacts"><button type="button" onclick="allSel('${f.key}')">Tutte</button>
+        <button type="button" onclick="resetField('${f.key}')">Nessuna</button></div>`;
+  }else if(f.type==="number"){
+    const vals=distinctNums(f.key);
+    if(vals.length<=NUM_PICK_MAX){
+      p.innerHTML=`<div class="ph">${esc(f.label)} — valori presenti</div>`+
+        (vals.length?vals.map(n=>
+          `<label><input type="checkbox" ${s.vals.includes(n)?"checked":""} onchange="toggleNum('${f.key}',${n})"><span class="mono">${n}</span></label>`).join("")
+          :`<div class="pempty">Nessun valore inserito.</div>`)+
+        `<div class="pacts"><button type="button" onclick="resetField('${f.key}')">Azzera</button></div>`;
+    }else{
+      p.innerHTML=`<div class="ph">${esc(f.label)} — intervallo (${vals.length} valori distinti)</div>
+        <div class="prow"><span>da</span><input type="number" step="any" value="${s.min??""}" oninput="setNumRange('${f.key}','min',this.value)">
+          <span>a</span><input type="number" step="any" value="${s.max??""}" oninput="setNumRange('${f.key}','max',this.value)"></div>
+        <div class="pacts"><button type="button" onclick="resetField('${f.key}')">Azzera</button></div>`;
+    }
+  }
+}
+function afterFilterChange(key,repaint){
+  syncFilterBtn(key);
+  renderItems();
+  if(repaint) paintPop();
+}
+function setBool(key,v){ fState(fieldByKey(key)).v=v; afterFilterChange(key); }
+function setRating(key,which,v){ fState(fieldByKey(key))[which]=(v===""?null:parseInt(v,10)); afterFilterChange(key); }
+function setNumRange(key,which,v){ fState(fieldByKey(key))[which]=(v===""?null:parseFloat(v)); afterFilterChange(key); }
+function toggleSel(key,i){
+  const f=fieldByKey(key),s=fState(f),o=(f.options||[])[i];
+  s.vals=s.vals.includes(o)?s.vals.filter(x=>x!==o):[...s.vals,o];
+  afterFilterChange(key);
+}
+function allSel(key){ const f=fieldByKey(key); fState(f).vals=[...(f.options||[])]; afterFilterChange(key,true); }
+function toggleNum(key,n){
+  const s=fState(fieldByKey(key));
+  s.vals=s.vals.includes(n)?s.vals.filter(x=>x!==n):[...s.vals,n];
+  afterFilterChange(key);
+}
+function resetField(key){
+  const f=fieldByKey(key); delete itemFilters[f.key]; fState(f);
+  afterFilterChange(key,true);
+}
+document.addEventListener("click",e=>{
+  if(!popKey) return;
+  if(e.target.closest("#pop")) return;
+  closePop();
+});
+window.addEventListener("resize",closePop);
+document.querySelector(".content")?.addEventListener("scroll",closePop);
+
 function renderItems(){
   const L=activeList(); if(!L) return;
   $("theadL").innerHTML=`<tr>${L.fields.map(f=>`<th>${esc(f.label)}</th>`).join("")}<th></th></tr>`;
-  const q=($("itemSearch").value||"").toLowerCase().trim();
-  let list=[...listItems];
-  if(q) list=list.filter(it=>Object.values(it.data||{}).join(" ").toLowerCase().includes(q));
+  const list=listItems.filter(it=>itemMatches(L,it));
+  $("itemCount").textContent=listItems.length
+    ? (list.length===listItems.length?`${listItems.length} voci`:`${list.length} / ${listItems.length}`) : "";
   const tb=$("tbodyL");
   if(!L.fields.length){tb.innerHTML=`<tr><td><div class="empty"><h3>Nessun campo</h3><div>Definisci i campi con "Modifica lista".</div></div></td></tr>`;return;}
   if(!list.length){tb.innerHTML=`<tr><td colspan="${L.fields.length+1}"><div class="empty">
@@ -1227,18 +1489,59 @@ $("tbodyL").addEventListener("dblclick",e=>{
 
 // ---------- modale lista ----------
 function typeOptions(sel){return Object.entries(FT_LABEL).map(([k,v])=>`<option value="${k}" ${k===sel?"selected":""}>${v}</option>`).join("");}
+const IC_GRIP=`<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>`;
+const IC_UP=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 15 6-6 6 6"/></svg>`;
+const IC_DOWN=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 9 6 6 6-6"/></svg>`;
+
 function paintFieldRows(){
   const box=$("l-fields");
-  const rows=draftFields.filter(f=>!f._del);
-  $("l-fields-empty").hidden=!!rows.length;
-  box.innerHTML=rows.map(f=>{const i=draftFields.indexOf(f);
-    return `<div class="frow" data-i="${i}">
+  $("l-fields-empty").hidden=!!draftFields.length;
+  const last=draftFields.length-1;
+  box.innerHTML=draftFields.map((f,i)=>`<div class="frow" data-i="${i}"
+      ondragstart="fieldDragStart(event,${i})" ondragover="fieldDragOver(event,${i})"
+      ondrop="fieldDrop(event,${i})" ondragleave="fieldDragLeave(event)" ondragend="fieldDragEnd(event)">
+      <div class="fdrag" title="Trascina per riordinare" onmousedown="armDrag(${i})" onmouseup="disarmDrag(${i})">${IC_GRIP}</div>
       <input class="f-label" placeholder="Nome campo" value="${esc(f.label)}" oninput="draftFields[${i}].label=this.value">
       <select class="f-type" onchange="draftFields[${i}].type=this.value;paintFieldRows()">${typeOptions(f.type)}</select>
       <input class="f-opts" ${f.type!=="select"?"data-off":""} placeholder="Opzioni separate da virgola"
         value="${esc((f.options||[]).join(", "))}" oninput="draftFields[${i}]._opts=this.value">
+      <div class="fmove">
+        <button type="button" title="Sposta su" ${i===0?"disabled":""} onclick="moveField(${i},${i-1})">${IC_UP}</button>
+        <button type="button" title="Sposta giù" ${i===last?"disabled":""} onclick="moveField(${i},${i+1})">${IC_DOWN}</button>
+      </div>
       <button class="btn sm ghost danger" title="Rimuovi campo" onclick="removeFieldRow(${i})"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
-    </div>`;}).join("");
+    </div>`).join("");
+}
+// Il draggable resta spento finché non si preme la maniglia: così gli input
+// restano selezionabili con il mouse.
+function armDrag(i){ const r=$("l-fields").querySelector(`.frow[data-i="${i}"]`); if(r) r.draggable=true; }
+function disarmDrag(i){ const r=$("l-fields").querySelector(`.frow[data-i="${i}"]`); if(r) r.draggable=false; }
+function fieldDragStart(e,i){
+  dragFrom=i; e.dataTransfer.effectAllowed="move";
+  try{ e.dataTransfer.setData("text/plain",String(i)); }catch(_){}
+  e.currentTarget.classList.add("dragging");
+}
+function fieldDragOver(e,i){
+  if(dragFrom===null||dragFrom===i) return;
+  e.preventDefault(); e.dataTransfer.dropEffect="move";
+  e.currentTarget.classList.remove("over-top","over-bot");
+  e.currentTarget.classList.add(i<dragFrom?"over-top":"over-bot");
+}
+function fieldDragLeave(e){ e.currentTarget.classList.remove("over-top","over-bot"); }
+function fieldDrop(e,i){
+  e.preventDefault();
+  if(dragFrom!==null&&dragFrom!==i) moveField(dragFrom,i);
+  dragFrom=null;
+}
+function fieldDragEnd(){
+  dragFrom=null;
+  $("l-fields").querySelectorAll(".frow").forEach(r=>{r.classList.remove("dragging","over-top","over-bot");r.draggable=false;});
+}
+function moveField(from,to){
+  if(to<0||to>=draftFields.length||from===to) return;
+  const [f]=draftFields.splice(from,1);
+  draftFields.splice(to,0,f);
+  paintFieldRows();
 }
 function addFieldRow(preset){
   draftFields.push(Object.assign({id:null,key:null,label:"",type:"text",options:null,_opts:""},preset||{}));
@@ -1249,8 +1552,9 @@ function removeFieldRow(i){
   const f=draftFields[i];
   if(f.id){
     if(!confirm(`Rimuovere il campo \u201c${f.label}\u201d? I valori già inseriti nelle voci verranno eliminati.`)) return;
-    f._del=true; draftDeleted.push(f.id);
-  } else draftFields.splice(i,1);
+    draftDeleted.push(f.id);
+  }
+  draftFields.splice(i,1);
   paintFieldRows();
 }
 function openList(id){
@@ -1272,7 +1576,6 @@ function parseOpts(s){return (s||"").split(",").map(x=>x.trim()).filter(Boolean)
 function collectFields(){
   const out=[];
   for(const f of draftFields){
-    if(f._del) continue;
     const label=(f.label||"").trim();
     if(!label){ if(f.id) throw new Error("Un campo esistente ha il nome vuoto"); continue; }
     const options=f.type==="select"?parseOpts(f._opts):null;
@@ -1297,13 +1600,23 @@ async function saveList(){
       const lid=Number(id);
       await api(`/lists/${lid}`,{method:"PATCH",body:JSON.stringify({name,description:desc})});
       for(const fid of draftDeleted) await api(`/lists/${lid}/fields/${fid}`,{method:"DELETE"});
+      const orderIds=[];
       for(const f of flds){
-        if(!f.id) await api(`/lists/${lid}/fields`,{method:"POST",body:JSON.stringify({label:f.label,type:f.type,options:f.options})});
-        else if(f._orig&&(f._orig.label!==f.label||f._orig.type!==f.type||f._orig.opts!==(f.options||[]).join(", ")))
-          await api(`/lists/${lid}/fields/${f.id}`,{method:"PATCH",body:JSON.stringify({label:f.label,type:f.type,options:f.options})});
+        if(!f.id){
+          const nf=await api(`/lists/${lid}/fields`,{method:"POST",body:JSON.stringify({label:f.label,type:f.type,options:f.options})});
+          if(nf&&nf.id) orderIds.push(nf.id);
+        }else{
+          if(f._orig&&(f._orig.label!==f.label||f._orig.type!==f.type||f._orig.opts!==(f.options||[]).join(", ")))
+            await api(`/lists/${lid}/fields/${f.id}`,{method:"PATCH",body:JSON.stringify({label:f.label,type:f.type,options:f.options})});
+          orderIds.push(f.id);
+        }
       }
+      // L'ordine delle righe nell'editor è la fonte di verità: lo scrivo in un colpo solo.
+      if(orderIds.length>1) await api(`/lists/${lid}/fields/reorder`,{method:"PUT",body:JSON.stringify({order:orderIds})});
       listItems=await api(`/lists/${lid}/items`);
     }
+    itemFilters={};                  // i campi possono essere cambiati: filtri non più validi
+    if($("itemSearch")) $("itemSearch").value="";
     await loadAll();closeList();toast(id?"Lista aggiornata":"Lista creata","ok");
   }catch(e){toast("Errore: "+e.message,"err");}finally{btn.disabled=false;}
 }
@@ -1321,7 +1634,7 @@ async function suggestFields(){
   const btn=$("lSuggest");btn.disabled=true;const old=btn.innerHTML;
   btn.innerHTML=`<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.2-8.5"/></svg> Chiedo a Claude…`;
   try{
-    const existing=draftFields.filter(f=>!f._del&&(f.label||"").trim()).map(f=>f.label.trim());
+    const existing=draftFields.filter(f=>(f.label||"").trim()).map(f=>f.label.trim());
     const r=await api("/lists/suggest-fields",{method:"POST",
       body:JSON.stringify({name,description:$("l-desc").value.trim()||null,existing})});
     (r.fields||[]).forEach(f=>addFieldRow({label:f.label,type:f.type,
