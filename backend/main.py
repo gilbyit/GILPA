@@ -37,7 +37,10 @@ STATUSES = {"new","active", "paused", "done"}
 PRIORITIES = {"high", "medium", "low"}
 COMPONENT_STATUSES = {"to_buy", "ordered", "delivered", "cancelled"}
 FIELD_TYPES = {"text", "number", "boolean", "date", "url", "select", "rating"}
-LLM_MODEL = os.getenv("GILPA_LLM_MODEL", "claude-haiku-4-5")
+# LLM_MODEL = os.getenv("GILPA_LLM_MODEL", "claude-haiku-4-5")
+LLM_BASE_URL = os.getenv("GILPA_LLM_BASE_URL", "https://api.groq.com/openai/v1")
+LLM_API_KEY  = os.getenv("GILPA_LLM_API_KEY")
+LLM_MODEL    = os.getenv("GILPA_LLM_MODEL", "llama-3.3-70b-versatile")
  
 # Categorie di default (seed iniziale). I "key" coincidono con quelli
 # che i progetti esistenti usano già, quindi i conteggi restano corretti.
@@ -940,9 +943,7 @@ def delete_item(list_id: int, item_id: int):
  
  
 # ---- LLM: suggerimento campi e autofill voci ----
-LLM_BASE_URL = os.getenv("GILPA_LLM_BASE_URL", "https://api.groq.com/openai/v1")
-LLM_API_KEY  = os.getenv("GILPA_LLM_API_KEY")
-LLM_MODEL    = os.getenv("GILPA_LLM_MODEL", "llama-3.3-70b-versatile")
+
  
 def _llm_message(system: str, user: str, max_tokens: int = 1200) -> str:
     if not LLM_API_KEY:
