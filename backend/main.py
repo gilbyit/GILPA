@@ -940,28 +940,28 @@ def delete_item(list_id: int, item_id: int):
  
  
 # ---- LLM: suggerimento campi e autofill voci ----
+LLM_BASE_URL = os.getenv("GILPA_LLM_BASE_URL", "https://api.groq.com/openai/v1")
+LLM_API_KEY  = os.getenv("GILPA_LLM_API_KEY")
+LLM_MODEL    = os.getenv("GILPA_LLM_MODEL", "llama-3.3-70b-versatile")
  
 def _llm_message(system: str, user: str, max_tokens: int = 1200) -> str:
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    if not api_key:
-        raise HTTPException(503, "ANTHROPIC_API_KEY non configurata sul backend: funzioni AI non disponibili")
+    if not LLM_API_KEY:
+        raise HTTPException(503, "GILPA_LLM_API_KEY non configurata: funzioni AI non disponibili")
+    import httpx
     try:
-        import anthropic
-    except ImportError:
-        raise HTTPException(503, "Pacchetto 'anthropic' non installato nel backend")
-    try:
-        client = anthropic.Anthropic(api_key=api_key)
-        msg = client.messages.create(
-            model=LLM_MODEL,
-            max_tokens=max_tokens,
-            system=system,
-            messages=[{"role": "user", "content": user}],
-        )
-        return "".join(b.text for b in msg.content if getattr(b, "type", "") == "text")
+        r = httpx.post(f"{LLM_BASE_URL}/chat/completions", timeout=120,
+            headers={"Authorization": f"Bearer {LLM_API_KEY}"},
+            json={"model": LLM_MODEL, "max_tokens": max_tokens,
+                  "messages": [{"role": "system", "content": system},
+                               {"role": "user", "content": user}]})
+        if r.status_code == 429:
+            raise HTTPException(429, "Limite di richieste raggiunto, riprova tra poco")
+        r.raise_for_status()
+        return r.json()["choices"][0]["message"]["content"]
     except HTTPException:
         raise
-    except Exception as e:  # errori API/rete
-        raise HTTPException(502, f"Errore Claude API: {e}")
+    except Exception as e:
+        raise HTTPException(502, f"Errore LLM: {e}")
  
  
 def _extract_json(text: str):
