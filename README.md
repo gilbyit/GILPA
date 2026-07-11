@@ -11,7 +11,7 @@ cosa che esce verso internet sono le (future) chiamate all'API di Claude.
  
 ## Stato attuale
  
-> Versione backend: **0.6.0**
+> Versione backend: **0.7.0**
  
 Funzionante e in uso:
  
@@ -73,19 +73,43 @@ può usare un proxy nginx `/api` → backend.
 ```
 gilpa/
 ├── docker-compose.yml
-├── .env                  # variabili d'ambiente — NON versionato
+├── .env                     # variabili d'ambiente — NON versionato
 ├── .gitignore
 ├── backend/
 │   ├── Dockerfile
 │   ├── requirements.txt
-│   └── main.py           # FastAPI: endpoint progetti + categorie
+│   ├── main.py              # app slim: monta i router, /health, /api/stats
+│   ├── config.py            # costanti (stati, tipi campo, LLM, palette…)
+│   ├── db.py                # connessione SQLite + init schema
+│   ├── helpers.py           # slug, chiavi, colori
+│   ├── llm.py               # client LLM + parsing JSON
+│   └── routers/
+│       ├── categories.py
+│       ├── projects.py
+│       ├── components.py
+│       └── lists.py         # liste, campi, riordino, voci, AI
 ├── frontend/
 │   ├── Dockerfile
 │   ├── nginx.conf
-│   └── index.html        # interfaccia (tema scuro)
-└── data/                 # NON versionato
-    └── gilpa.db          # database SQLite (creato all'avvio)
+│   ├── index.html           # struttura (tema scuro)
+│   ├── styles.css
+│   ├── core.js              # config, stato condiviso, API/mock, load, nav
+│   ├── categories.js
+│   ├── projects.js
+│   ├── components.js
+│   ├── lists.js             # render, filtri voci, riordino campi, modale, AI
+│   └── boot.js
+└── data/                    # NON versionato
+    └── gilpa.db             # database SQLite (creato all'avvio)
 ```
+
+**Nota sull'architettura.** Frontend e backend sono divisi per dominio, non in un
+unico file. Il backend usa `APIRouter` con import relativi (funziona sia come
+`src.main:app` nel container sia come `backend.main` nei test). Il frontend usa
+`<script>` classici caricati in ordine (`core.js` per primo, `boot.js` per ultimo)
+che condividono lo scope globale: così gli handler inline `onclick="…"` restano
+validi senza build step. Non sono ES module: è una separazione fisica, non
+isolamento di scope — passo successivo naturale se serve.
  
 `data/` e `.env` sono esclusi dal versionamento: contengono rispettivamente i dati
 personali e la chiave API.
