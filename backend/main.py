@@ -7,7 +7,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .db import init_db, get_db
-from .routers import categories, projects, components, lists
+try:
+    from .routers import categories, projects, components, lists
+except ModuleNotFoundError as e:
+    raise RuntimeError(
+        f"Import dei router fallito ({e}). Verifica che esista la cartella "
+        "'routers/' accanto a main.py, con dentro categories.py, projects.py, "
+        "components.py, lists.py e __init__.py. Nel container: "
+        "`docker exec gilpa-backend ls -R /app/src`."
+    ) from e
 
 app = FastAPI(title="GILPA", version="0.7.0")
 
